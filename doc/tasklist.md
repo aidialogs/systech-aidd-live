@@ -9,7 +9,7 @@
 
 | Итерация | Задача | Статус | Дата |
 |----------|--------|--------|------|
-| 0️⃣ | Эхо-бот | ⏳ Ожидает | - |
+| 0️⃣ | Эхо-бот | ✅ Завершено | 2025-10-10 |
 | 1️⃣ | Интеграция LLM | ⏳ Ожидает | - |
 | 2️⃣ | Интеграция истории диалога | ⏳ Ожидает | - |
 | 3️⃣ | Команды и обрезка истории | ⏳ Ожидает | - |
@@ -30,26 +30,26 @@
 **Цель:** Подготовить окружение, выстроить правильную архитектуру с MessageHandler-заглушкой
 
 **Инициализация:**
-- [ ] Создать структуру директорий (src/, tests/, logs/, doc/)
-- [ ] Создать `pyproject.toml` с зависимостями (aiogram, openai, python-dotenv)
-- [ ] Создать `.env.example`
-- [ ] Создать `.gitignore`
-- [ ] Создать `Makefile` с командами
-- [ ] Создать `README.md`
-- [ ] Выполнить `make install`
+- [x] Создать структуру директорий (src/, tests/, logs/, doc/)
+- [x] Создать `pyproject.toml` с зависимостями (aiogram, openai, python-dotenv)
+- [x] Создать `.env.example`
+- [x] Создать `.gitignore`
+- [x] Создать `Makefile` с командами
+- [x] Создать `README.md`
+- [x] Выполнить `make install`
 
 **Файлы:**
-- [ ] `src/__init__.py` (пустой)
-- [ ] `src/config.py` - класс Config с загрузкой .env (BOT_TOKEN, LLM_*)
-- [ ] `src/message_handler.py` - класс MessageHandler (пока заглушка)
+- [x] `src/__init__.py` (пустой)
+- [x] `src/config.py` - класс Config с загрузкой .env (BOT_TOKEN, LLM_*)
+- [x] `src/message_handler.py` - класс MessageHandler (пока заглушка)
   - `__init__()` - пустой конструктор
   - `async handle_message(message, user_id, chat_id)` - возвращает "Вы написали: {текст}"
-- [ ] `src/main.py` - инициализация aiogram + MessageHandler, подключение к dispatcher
+- [x] `src/main.py` - инициализация aiogram + MessageHandler, подключение к dispatcher
 
 **Логирование:**
-- [ ] Настроить базовый logging в `main.py` (файл `logs/app.log` + консоль)
-- [ ] Логировать запуск бота: "Bot started"
-- [ ] Логировать остановку бота: "Bot stopped"
+- [x] Настроить базовый logging в `main.py` (файл `logs/app.log` + консоль)
+- [x] Логировать запуск бота: "Bot started"
+- [x] Логировать остановку бота: "Bot stopped"
 
 **Архитектура:**
 ```
