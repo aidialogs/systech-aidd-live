@@ -37,7 +37,7 @@ async def main():
         model=config.llm_model
     )
     
-    context_manager = ContextManager()
+    context_manager = ContextManager(config.max_context_messages)
     
     message_handler = MessageHandler(llm_client, context_manager, config.system_prompt)
     

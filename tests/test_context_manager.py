@@ -3,7 +3,7 @@ from src.message import Message
 
 
 def test_context_manager_operations():
-    cm = ContextManager()
+    cm = ContextManager(max_context_messages=20)
     
     # Проверка пустого контекста
     context = cm.get_context(123, 456)
@@ -44,6 +44,32 @@ def test_context_manager_operations():
     # Проверка что другой контекст не затронут
     context2 = cm.get_context(789, 789)
     assert len(context2) == 1
+
+
+def test_context_trimming():
+    cm = ContextManager(max_context_messages=5)
+    
+    # Добавить system prompt
+    system_msg = Message("system", "You are a helpful assistant")
+    cm.add_message(100, 200, system_msg)
+    
+    # Добавить 10 сообщений (превысит лимит 5)
+    for i in range(10):
+        user_msg = Message("user", f"Message {i}")
+        assistant_msg = Message("assistant", f"Response {i}")
+        cm.add_message(100, 200, user_msg)
+        cm.add_message(100, 200, assistant_msg)
+    
+    # Проверка что контекст обрезан до 5 сообщений
+    context = cm.get_context(100, 200)
+    assert len(context) == 5
+    
+    # Проверка что system prompt сохранен
+    assert context[0].role == "system"
+    assert context[0].content == "You are a helpful assistant"
+    
+    # Проверка что сохранены последние сообщения
+    assert "Message 9" in context[-2].content or "Response 9" in context[-1].content
 
 
 

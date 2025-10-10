@@ -13,6 +13,23 @@ class MessageHandler:
         
         logging.info(f"Message from user_id={user_id} chat_id={chat_id}: \"{text}\"")
         
+        # Обработка команд
+        if text == '/start':
+            logging.info(f"Command /start from user_id={user_id}")
+            return "Привет! Я AI-ассистент. Используй /help для справки."
+        
+        if text == '/help':
+            logging.info(f"Command /help from user_id={user_id}")
+            return ("Доступные команды:\n"
+                    "/start - Начать диалог\n"
+                    "/help - Показать эту справку\n"
+                    "/reset - Очистить историю диалога")
+        
+        if text == '/reset':
+            logging.info(f"Command /reset from user_id={user_id}")
+            self.context_manager.clear_context(user_id, chat_id)
+            return "История диалога очищена. Начнем сначала!"
+        
         try:
             # Получить контекст
             context = self.context_manager.get_context(user_id, chat_id)
