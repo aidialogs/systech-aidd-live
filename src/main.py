@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher, types
 
 from src.config import Config
 from src.message_handler import MessageHandler
+from src.llm_client import LLMClient
 
 
 async def main():
@@ -28,7 +29,14 @@ async def main():
     
     bot = Bot(token=config.bot_token)
     dp = Dispatcher()
-    message_handler = MessageHandler()
+    
+    llm_client = LLMClient(
+        api_key=config.llm_api_key,
+        base_url=config.llm_base_url,
+        model=config.llm_model
+    )
+    
+    message_handler = MessageHandler(llm_client, config.system_prompt)
     
     @dp.message()
     async def handle(message: types.Message):

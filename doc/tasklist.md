@@ -10,7 +10,7 @@
 | Итерация | Задача | Статус | Дата |
 |----------|--------|--------|------|
 | 0️⃣ | Эхо-бот | ✅ Завершено | 2025-10-10 |
-| 1️⃣ | Интеграция LLM | ⏳ Ожидает | - |
+| 1️⃣ | Интеграция LLM | ✅ Завершено | 2025-10-10 |
 | 2️⃣ | Интеграция истории диалога | ⏳ Ожидает | - |
 | 3️⃣ | Команды и обрезка истории | ⏳ Ожидает | - |
 | 4️⃣ | Финальное тестирование | ⏳ Ожидает | - |
@@ -74,25 +74,25 @@ Telegram → MessageHandler (заглушка) → Echo ответ
 **Цель:** Подключить LLM API, отвечать без истории диалога
 
 **Файлы:**
-- [ ] `src/message.py` - класс Message (role, content, to_dict)
-- [ ] `src/llm_client.py` - класс LLMClient
+- [x] `src/message.py` - класс Message (role, content, to_dict)
+- [x] `src/llm_client.py` - класс LLMClient
   - `__init__(api_key, base_url, model)`
   - `async get_response(messages)` - возвращает текст ответа
 
 **Доработка MessageHandler:**
-- [ ] Добавить в `__init__`: llm_client, system_prompt
-- [ ] Обновить `handle_message`: формировать [system_prompt, user_message] → LLM → ответ
+- [x] Добавить в `__init__`: llm_client, system_prompt
+- [x] Обновить `handle_message`: формировать [system_prompt, user_message] → LLM → ответ
 
 **Интеграция в main.py:**
-- [ ] Создать экземпляр LLMClient
-- [ ] Передать LLMClient в MessageHandler
-- [ ] MessageHandler использует LLM вместо эхо
+- [x] Создать экземпляр LLMClient
+- [x] Передать LLMClient в MessageHandler
+- [x] MessageHandler использует LLM вместо эхо
 
 **Логирование:**
-- [ ] Логировать входящие сообщения: user_id, chat_id, текст
-- [ ] Логировать LLM запросы: модель, количество сообщений
-- [ ] Логировать LLM ответы: длительность, статус (success/error)
-- [ ] Логировать ошибки LLM API с деталями
+- [x] Логировать входящие сообщения: user_id, chat_id, текст
+- [x] Логировать LLM запросы: модель, количество сообщений
+- [x] Логировать LLM ответы: длительность, статус (success/error)
+- [x] Логировать ошибки LLM API с деталями
 
 **Архитектура:**
 ```

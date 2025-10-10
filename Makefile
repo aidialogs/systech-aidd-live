@@ -1,13 +1,13 @@
 .PHONY: install run test clean
 
 install:
-	uv sync
+	uv sync --extra dev
 
 run:
 	uv run python -m src.main
 
 test:
-	uv run pytest
+	. .venv/bin/activate && python -m pytest
 
 clean:
 	rm -rf logs/*.log
