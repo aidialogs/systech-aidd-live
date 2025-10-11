@@ -23,7 +23,15 @@
 ### Тестирование
 - **pytest** - минимальный набор unit-тестов для критичных компонентов
 - **pytest-asyncio** - поддержка асинхронных тестов
+- **pytest-cov** - измерение покрытия тестами
+- **pytest-mock** - моки для изоляции тестов
 - Покрытие тестами: только ключевая бизнес-логика
+
+### Инструменты качества кода
+- **ruff** - современный форматтер и линтер (замена black + flake8 + isort)
+- **mypy** - проверка типов (strict mode)
+- Запуск через Makefile: `make format`, `make lint`, `make test-cov`
+- Без pre-commit hooks - все запускается вручную
 
 ### Деплой
 - **Локальный запуск** - `python -m src.main`
@@ -545,7 +553,7 @@ uv run python -m src.main
 
 ```makefile
 install:
-    uv sync
+    uv sync --extra dev
 
 run:
     uv run python -m src.main
@@ -553,8 +561,21 @@ run:
 test:
     uv run pytest
 
+test-cov:
+    uv run pytest  # с coverage (настроено в pyproject.toml)
+
+format:
+    uv run ruff format src/ tests/
+
+lint:
+    uv run ruff check src/ tests/
+    uv run mypy src/ tests/
+
+check-all:
+    make format && make lint && make test-cov
+
 clean:
-    rm -rf logs/*.log
+    rm -rf logs/*.log htmlcov/ .coverage
 ```
 
 ### Особенности локального запуска

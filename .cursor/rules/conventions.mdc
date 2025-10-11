@@ -3,7 +3,9 @@ alwaysApply: false
 ---
 # Правила разработки кода
 
-> Полное техническое видение проекта: @vision.md
+> Полное техническое видение проекта: @vision.md  
+> Workflow процесс: @workflow.mdc  
+> Рефакторинг кода: @workflow_tech_debt.mdc + @tasklist_tech_debt.md
 
 ## Главные принципы
 
@@ -51,6 +53,21 @@ alwaysApply: false
 - Логирование всех ошибок
 - Дружелюбные сообщения пользователю
 
+## Инструменты качества кода
+
+### Форматирование и линтинг
+- **ruff** - современный форматтер и линтер (замена black + flake8 + isort)
+- **mypy** - проверка типов (strict mode)
+- **pytest-cov** - измерение покрытия тестами
+
+### Запуск через Makefile
+- `make format` - автоформатирование кода
+- `make lint` - проверка качества (ruff check + mypy)
+- `make test-cov` - тесты с coverage
+- `make check-all` - полная проверка (format + lint + test-cov)
+
+**НЕ используем pre-commit hooks** - все запускается вручную через make
+
 ## Зависимости
 
 См. полный список в @vision.md (раздел 1)
@@ -60,6 +77,10 @@ alwaysApply: false
 - aiogram 3.x
 - openai
 - python-dotenv
+
+Dev-зависимости:
+- pytest, pytest-asyncio, pytest-mock
+- ruff, mypy, pytest-cov
 
 ## Структура файлов
 
@@ -77,11 +98,13 @@ src/
 
 ## Проверка перед коммитом
 
+- [ ] Запустить `make format` - код отформатирован
+- [ ] Запустить `make lint` - проверка качества кода
+- [ ] Запустить `make test-cov` - все тесты проходят
 - [ ] Один класс = один файл
-- [ ] Нет type hints
+- [ ] Нет type hints (пока)
 - [ ] Нет сложных паттернов
 - [ ] Код асинхронный (async/await)
 - [ ] Плоская структура (всё в src/)
 - [ ] Логирование ошибок
-- [ ] Базовый PEP 8 визуально
 
