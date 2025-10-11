@@ -86,8 +86,10 @@ systech-aidd-live/
 │   ├── main.py              # Точка входа, инициализация, запуск polling
 │   ├── config.py            # Config dataclass - настройки из .env с валидацией
 │   ├── exceptions.py        # Custom exceptions (ConfigError, LLMError)
+│   ├── protocols.py         # Protocol interfaces для DI (LLMClientProtocol, ContextManagerProtocol)
 │   ├── message.py           # Message класс - структура сообщения
-│   ├── message_handler.py   # MessageHandler класс - обработка сообщений
+│   ├── command_handler.py   # CommandHandler класс - обработка команд (/start, /help, /reset)
+│   ├── message_handler.py   # MessageHandler класс - координация обработки сообщений
 │   ├── llm_client.py        # LLMClient класс - работа с LLM API
 │   └── context_manager.py   # ContextManager класс - управление контекстом
 ├── tests/
@@ -119,10 +121,11 @@ systech-aidd-live/
 User (Telegram)
      ↓
 [MessageHandler] ← координатор
-     ↓          ↓
-[ContextManager] [LLMClient]
-     ↓              ↓
-[In-Memory Dict]  [OpenAI API]
+     ↓          ↓         ↓
+[CommandHandler] [ContextManager] [LLMClient]
+     ↓              ↓                  ↓
+[/start,/help]  [In-Memory Dict]  [OpenAI API]
+[/reset]
 ```
 
 ### Поток обработки сообщения
@@ -140,9 +143,15 @@ User (Telegram)
 ### Ответственность компонентов
 
 **MessageHandler** (координатор):
-- Оркестрирует взаимодействие между ContextManager и LLMClient
-- Обрабатывает команды: /start, /help, /reset
+- Оркестрирует взаимодействие между CommandHandler, ContextManager и LLMClient
+- Делегирует обработку команд в CommandHandler
+- Обрабатывает обычные сообщения через LLM
 - Обработка ошибок с дружелюбными сообщениями
+
+**CommandHandler** (обработчик команд):
+- Отвечает только за обработку команд: /start, /help, /reset
+- SRP (Single Responsibility Principle) - одна ответственность
+- Зависит только от ContextManager (через Protocol)
 
 **ContextManager** (хранилище):
 - Хранит историю диалогов в памяти (dict: (user_id, chat_id) → list of Message)
@@ -163,9 +172,23 @@ User (Telegram)
 
 ### Принципы архитектуры
 - **Простота** - минимум слоев и абстракций
+- **SRP (Single Responsibility Principle)** - каждый класс имеет одну ответственность
+- **DRY (Don't Repeat Yourself)** - нет дублирования кода
+- **DIP (Dependency Inversion)** - зависимости через Protocol интерфейсы (для тестируемости)
 - **Синхронность операций** - последовательная обработка без очередей
 - **In-memory state** - без БД, состояние в памяти процесса
 - **Stateless LLM** - LLMClient не хранит состояние
+
+### Protocols для Dependency Injection
+
+Используем Protocol interfaces для абстракции зависимостей:
+- `LLMClientProtocol` - интерфейс для LLM клиента
+- `ContextManagerProtocol` - интерфейс для менеджера контекста
+
+Это позволяет:
+- Легко мокать зависимости в тестах
+- Соблюдать Dependency Inversion Principle
+- Сохранять простоту (без DI-контейнеров)
 
 ---
 

@@ -10,9 +10,13 @@ class ContextManager:
         self.contexts: dict[tuple[int, int], list[Message]] = {}
         self.max_context_messages = max_context_messages
 
+    def _get_key(self, user_id: int, chat_id: int) -> tuple[int, int]:
+        """Get storage key for user and chat."""
+        return (user_id, chat_id)
+
     def add_message(self, user_id: int, chat_id: int, message: Message) -> None:
         """Add a message to the conversation context."""
-        key = (user_id, chat_id)
+        key = self._get_key(user_id, chat_id)
 
         if key not in self.contexts:
             self.contexts[key] = []
@@ -39,12 +43,12 @@ class ContextManager:
 
     def get_context(self, user_id: int, chat_id: int) -> list[Message]:
         """Get conversation context for a user in a specific chat."""
-        key = (user_id, chat_id)
+        key = self._get_key(user_id, chat_id)
         return self.contexts.get(key, [])
 
     def clear_context(self, user_id: int, chat_id: int) -> None:
         """Clear conversation context for a user in a specific chat."""
-        key = (user_id, chat_id)
+        key = self._get_key(user_id, chat_id)
 
         if key in self.contexts:
             del self.contexts[key]

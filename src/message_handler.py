@@ -2,20 +2,25 @@ import logging
 
 from aiogram import types
 
-from src.context_manager import ContextManager
+from src.command_handler import CommandHandler
 from src.exceptions import LLMError
-from src.llm_client import LLMClient
 from src.message import Message
+from src.protocols import ContextManagerProtocol, LLMClientProtocol
 
 
 class MessageHandler:
     """Handles incoming messages and coordinates bot responses."""
 
     def __init__(
-        self, llm_client: LLMClient, context_manager: ContextManager, system_prompt: str
+        self,
+        llm_client: LLMClientProtocol,
+        context_manager: ContextManagerProtocol,
+        command_handler: CommandHandler,
+        system_prompt: str,
     ) -> None:
         self.llm_client = llm_client
         self.context_manager = context_manager
+        self.command_handler = command_handler
         self.system_prompt = system_prompt
 
     async def handle_message(self, message: types.Message, user_id: int, chat_id: int) -> str:
@@ -26,25 +31,12 @@ class MessageHandler:
 
         logging.info(f'Message from user_id={user_id} chat_id={chat_id}: "{text}"')
 
-        # Обработка команд
-        if text == "/start":
-            logging.info(f"Command /start from user_id={user_id}")
-            return "Привет! Я AI-ассистент. Используй /help для справки."
+        # Сначала проверяем команды
+        command_response = self.command_handler.handle_command(text, user_id, chat_id)
+        if command_response:
+            return command_response
 
-        if text == "/help":
-            logging.info(f"Command /help from user_id={user_id}")
-            return (
-                "Доступные команды:\n"
-                "/start - Начать диалог\n"
-                "/help - Показать эту справку\n"
-                "/reset - Очистить историю диалога"
-            )
-
-        if text == "/reset":
-            logging.info(f"Command /reset from user_id={user_id}")
-            self.context_manager.clear_context(user_id, chat_id)
-            return "История диалога очищена. Начнем сначала!"
-
+        # Если не команда - обрабатываем как обычное сообщение
         try:
             # Получить контекст
             context = self.context_manager.get_context(user_id, chat_id)

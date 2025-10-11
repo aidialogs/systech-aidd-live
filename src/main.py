@@ -5,6 +5,7 @@ import os
 from aiogram import Bot, Dispatcher, types
 from dotenv import load_dotenv
 
+from src.command_handler import CommandHandler
 from src.config import Config
 from src.context_manager import ContextManager
 from src.llm_client import LLMClient
@@ -36,7 +37,11 @@ async def main() -> None:
 
     context_manager = ContextManager(config.max_context_messages)
 
-    message_handler = MessageHandler(llm_client, context_manager, config.system_prompt)
+    command_handler = CommandHandler(context_manager)
+
+    message_handler = MessageHandler(
+        llm_client, context_manager, command_handler, config.system_prompt
+    )
 
     @dp.message()
     async def handle(message: types.Message) -> None:

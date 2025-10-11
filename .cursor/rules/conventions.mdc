@@ -37,6 +37,7 @@ alwaysApply: false
 ### ✅ Разрешено использовать (для качества кода):
 - **Type hints** - обязательны для всех функций и методов
 - **Dataclasses** - для структур данных (например, Config)
+- **Protocols** - для Dependency Injection (минимально, только где улучшает тестируемость)
 - **Форматтеры и линтеры** - ruff, mypy (запускаются через make)
 
 ## Стиль кода
@@ -63,6 +64,8 @@ alwaysApply: false
 - Функции - для простой обработки
 - Простой `__init__` с явными параметрами и type hints
 - Dataclasses для структур данных (Config, и т.д.)
+- **SRP (Single Responsibility Principle)** - один класс = одна ответственность
+  - Пример: CommandHandler отвечает только за команды, MessageHandler - за обработку сообщений
 
 ### Обработка ошибок
 - Простой try/except
@@ -108,8 +111,10 @@ src/
 ├── main.py              # Точка входа
 ├── config.py            # Config dataclass с валидацией
 ├── exceptions.py        # Custom exceptions (ConfigError, LLMError)
+├── protocols.py         # Protocol interfaces для DI
 ├── message.py           # Message класс
-├── message_handler.py   # MessageHandler класс
+├── command_handler.py   # CommandHandler класс - обработка команд
+├── message_handler.py   # MessageHandler класс - координация
 ├── llm_client.py        # LLMClient класс
 └── context_manager.py   # ContextManager класс
 ```
