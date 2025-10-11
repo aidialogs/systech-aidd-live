@@ -44,7 +44,10 @@ warn_unused_configs = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "--cov=src --cov-report=term-missing --cov-report=html"
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+]
 
 [tool.coverage.run]
-omit = ["tests/*", "**/__pycache__/*"]
+omit = ["tests/*", "**/__pycache__/*", "src/main.py"]
 

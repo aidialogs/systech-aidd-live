@@ -1,4 +1,4 @@
-.PHONY: install run test test-cov format lint check-all clean
+.PHONY: install run test test-cov test-all format lint check-all clean
 
 install:
 	uv sync --extra dev
@@ -10,6 +10,9 @@ test:
 	. .venv/bin/activate && python -m pytest
 
 test-cov:
+	uv run pytest -m "not integration"
+
+test-all:
 	uv run pytest
 
 format:

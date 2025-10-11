@@ -72,3 +72,15 @@ def test_context_trimming() -> None:
 
     # Проверка что сохранены последние сообщения
     assert "Message 9" in context[-2].content or "Response 9" in context[-1].content
+
+
+def test_clear_nonexistent_context() -> None:
+    """Test clearing context that doesn't exist."""
+    cm = ContextManager(max_context_messages=20)
+
+    # Clear context that was never created
+    cm.clear_context(999, 888)
+
+    # Should not raise error, just log
+    context = cm.get_context(999, 888)
+    assert context == []

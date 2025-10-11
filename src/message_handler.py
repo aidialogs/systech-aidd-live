@@ -45,12 +45,13 @@ class MessageHandler:
             if not context:
                 system_message = Message("system", self.system_prompt)
                 self.context_manager.add_message(user_id, chat_id, system_message)
-                context = [system_message]
 
             # Добавить user message в контекст
             user_message = Message("user", text)
             self.context_manager.add_message(user_id, chat_id, user_message)
-            context.append(user_message)
+
+            # Получить обновленный контекст для отправки в LLM
+            context = self.context_manager.get_context(user_id, chat_id)
 
             # Логировать размер контекста
             logging.info(f"Sending to LLM: context_size={len(context)}")
