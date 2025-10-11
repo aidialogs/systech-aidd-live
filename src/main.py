@@ -37,7 +37,7 @@ async def main() -> None:
 
     context_manager = ContextManager(config.max_context_messages)
 
-    command_handler = CommandHandler(context_manager)
+    command_handler = CommandHandler(context_manager, config.system_prompt)
 
     message_handler = MessageHandler(
         llm_client, context_manager, command_handler, config.system_prompt

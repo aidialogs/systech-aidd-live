@@ -88,10 +88,12 @@ systech-aidd-live/
 │   ├── exceptions.py        # Custom exceptions (ConfigError, LLMError)
 │   ├── protocols.py         # Protocol interfaces для DI (LLMClientProtocol, ContextManagerProtocol)
 │   ├── message.py           # Message класс - структура сообщения
-│   ├── command_handler.py   # CommandHandler класс - обработка команд (/start, /help, /reset)
+│   ├── command_handler.py   # CommandHandler класс - обработка команд (/start, /help, /reset, /role)
 │   ├── message_handler.py   # MessageHandler класс - координация обработки сообщений
 │   ├── llm_client.py        # LLMClient класс - работа с LLM API
 │   └── context_manager.py   # ContextManager класс - управление контекстом
+├── prompts/
+│   └── system_prompt.txt    # Системный промпт для роли AICodingExpert
 ├── tests/
 │   ├── __init__.py
 │   ├── test_llm_client.py
@@ -149,9 +151,10 @@ User (Telegram)
 - Обработка ошибок с дружелюбными сообщениями
 
 **CommandHandler** (обработчик команд):
-- Отвечает только за обработку команд: /start, /help, /reset
+- Отвечает только за обработку команд: /start, /help, /reset, /role
 - SRP (Single Responsibility Principle) - одна ответственность
 - Зависит только от ContextManager (через Protocol)
+- Для команды /role использует Config.system_prompt (содержимое файла промпта)
 
 **ContextManager** (хранилище):
 - Хранит историю диалогов в памяти (dict: (user_id, chat_id) → list of Message)
@@ -169,6 +172,7 @@ User (Telegram)
 - Валидация обязательных переменных при старте (Config.from_env())
 - Бросает ConfigError если отсутствуют обязательные переменные
 - Хранение: bot_token, llm_api_key, llm_base_url, llm_model, system_prompt, max_context_messages
+- System prompt загружается из файла (prompts/system_prompt.txt) или из переменной окружения SYSTEM_PROMPT
 
 ### Принципы архитектуры
 - **Простота** - минимум слоев и абстракций
@@ -372,20 +376,27 @@ SYSTEM_PROMPT=Ты полезный AI-ассистент. Отвечай кра
   - `/start` - начать работу с ботом
   - `/help` - показать справку
   - `/reset` - очистить историю диалога
+  - `/role` - показать информацию о роли ассистента
 
 **4. Сброс контекста - команда /reset**
 - Пользователь отправляет `/reset`
 - ContextManager очищает историю диалога для (user_id, chat_id)
 - Бот подтверждает: "История диалога очищена. Начнем сначала!"
 
-**5. Обработка ошибок LLM API**
+**5. Отображение роли - команда /role**
+- Пользователь отправляет `/role`
+- Бот показывает информацию о своей роли (содержимое системного промпта)
+- Отображается текст из prompts/system_prompt.txt
+- Пример: если промпт содержит "Ты AICodingExpert - эксперт по программированию...", то это и показывается пользователю
+
+**6. Обработка ошибок LLM API**
 - При ошибке API (timeout, недоступность сервиса, etc.)
 - MessageHandler перехватывает exception
 - Пользователь видит дружелюбное сообщение:
   - "Извините, не могу ответить прямо сейчас. Попробуйте чуть позже."
 - Ошибка логируется для последующего анализа
 
-**6. Длинный диалог (превышение лимита контекста)**
+**7. Длинный диалог (превышение лимита контекста)**
 - При превышении max_context_messages (например, 20)
 - ContextManager автоматически удаляет старые сообщения
 - System prompt всегда сохраняется
@@ -430,6 +441,8 @@ class Config:
         """Load configuration from environment variables with validation."""
         # Валидация обязательных полей
         # Бросает ConfigError если переменные отсутствуют
+        # Загружает system_prompt из файла prompts/system_prompt.txt
+        # или из переменной окружения SYSTEM_PROMPT
         ...
 ```
 
@@ -442,7 +455,8 @@ class Config:
 - `LLM_MODEL` - название модели (например: anthropic/claude-3.5-sonnet)
 
 **Опциональные параметры (с дефолтами):**
-- `SYSTEM_PROMPT` - системный промпт (default: "Ты полезный AI-ассистент")
+- `SYSTEM_PROMPT` - системный промпт (default: загружается из prompts/system_prompt.txt)
+- `SYSTEM_PROMPT_FILE` - путь к файлу с системным промптом (default: "prompts/system_prompt.txt")
 - `MAX_CONTEXT_MESSAGES` - лимит сообщений в контексте (default: 20)
 
 ### Файлы конфигурации
@@ -453,7 +467,7 @@ BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
 LLM_API_KEY=sk-or-v1-xxxxxxxxxxxxx
 LLM_BASE_URL=https://openrouter.ai/api/v1
 LLM_MODEL=anthropic/claude-3.5-sonnet
-SYSTEM_PROMPT=Ты полезный AI-ассистент. Отвечай кратко и по делу.
+SYSTEM_PROMPT_FILE=prompts/system_prompt.txt
 MAX_CONTEXT_MESSAGES=20
 ```
 
@@ -463,7 +477,7 @@ BOT_TOKEN=your_telegram_bot_token
 LLM_API_KEY=your_openrouter_api_key
 LLM_BASE_URL=https://openrouter.ai/api/v1
 LLM_MODEL=anthropic/claude-3.5-sonnet
-SYSTEM_PROMPT=Ты полезный AI-ассистент
+SYSTEM_PROMPT_FILE=prompts/system_prompt.txt
 MAX_CONTEXT_MESSAGES=20
 ```
 

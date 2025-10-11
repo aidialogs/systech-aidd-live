@@ -19,7 +19,7 @@ def setup_handler() -> SetupHandlerTuple:
     mock_llm.get_response = AsyncMock(return_value="AI response")
 
     context_manager = ContextManager(max_context_messages=20)
-    command_handler = CommandHandler(context_manager)
+    command_handler = CommandHandler(context_manager, "Test system prompt")
 
     handler = MessageHandler(
         llm_client=mock_llm,
@@ -74,7 +74,7 @@ async def test_handle_none_text() -> None:
     """Test handling message with None text."""
     mock_llm = AsyncMock()
     context_manager = ContextManager(20)
-    command_handler = CommandHandler(context_manager)
+    command_handler = CommandHandler(context_manager, "Test prompt")
 
     handler = MessageHandler(mock_llm, context_manager, command_handler, "Test prompt")
 

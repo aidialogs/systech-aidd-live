@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 
@@ -45,8 +46,24 @@ class Config:
         assert llm_base_url is not None
         assert llm_model is not None
 
+        # Try to load system prompt from file first
+        system_prompt_file = os.getenv("SYSTEM_PROMPT_FILE")
+        system_prompt = None
+
+        if system_prompt_file:
+            try:
+                with open(system_prompt_file, encoding="utf-8") as f:
+                    system_prompt = f.read().strip()
+                logging.info(f"System prompt loaded from file: {system_prompt_file}")
+            except (OSError, FileNotFoundError) as e:
+                logging.warning(f"Failed to load system prompt from file: {e}")
+
+        # Fallback to SYSTEM_PROMPT env var if not loaded from file
+        if not system_prompt:
+            system_prompt = os.getenv("SYSTEM_PROMPT", "Ты полезный AI-ассистент")
+            logging.info("System prompt loaded from environment variable")
+
         # Optional fields with defaults
-        system_prompt = os.getenv("SYSTEM_PROMPT", "Ты полезный AI-ассистент")
         max_context_messages = int(os.getenv("MAX_CONTEXT_MESSAGES", "20"))
 
         return cls(

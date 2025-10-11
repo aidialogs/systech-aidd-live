@@ -78,3 +78,27 @@ def test_get_help_text() -> None:
     assert "/start" in help_text
     assert "/help" in help_text
     assert "/reset" in help_text
+    assert "/role" in help_text
+
+
+def test_command_role() -> None:
+    """Test /role command returns system prompt."""
+    cm = ContextManager(max_context_messages=20)
+    system_prompt = "I am a test AI assistant"
+    handler = CommandHandler(cm, system_prompt)
+
+    response = handler.handle_command("/role", 123, 456)
+
+    assert response is not None
+    assert system_prompt in response
+
+
+def test_help_includes_role_command() -> None:
+    """Test /help command includes /role in the list."""
+    cm = ContextManager(max_context_messages=20)
+    handler = CommandHandler(cm, "Test prompt")
+
+    response = handler.handle_command("/help", 123, 456)
+
+    assert response is not None
+    assert "/role" in response
