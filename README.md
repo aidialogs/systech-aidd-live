@@ -20,11 +20,19 @@ Telegram-бот с искусственным интеллектом, котор
 
 ## Технологии
 
+**Core:**
 - Python 3.11+
 - aiogram 3.x - асинхронная библиотека для Telegram Bot API
 - openai - Python SDK для работы с LLM
 - python-dotenv - загрузка переменных окружения
 - uv - современный менеджер пакетов
+
+**Code Quality:**
+- ruff - быстрый линтер и форматтер
+- mypy - статическая проверка типов (strict mode)
+- pytest - фреймворк для тестирования
+- pytest-cov - измерение покрытия кода тестами
+- pytest-mock - моки для изоляции тестов
 
 ## Быстрый старт
 
@@ -70,10 +78,22 @@ uv run python -m src.main
 
 ## Команды
 
-- `make install` - установка зависимостей
+**Разработка:**
+- `make install` - установка зависимостей (включая dev-инструменты)
 - `make run` - запуск бота
+
+**Тестирование:**
 - `make test` - запуск тестов
-- `make clean` - очистка логов
+- `make test-cov` - запуск тестов с измерением coverage (без integration тестов)
+- `make test-all` - запуск всех тестов (включая integration)
+
+**Качество кода:**
+- `make format` - автоформатирование кода (ruff format)
+- `make lint` - проверка кода (ruff check + mypy)
+- `make check-all` - полная проверка (format + lint + test-cov)
+
+**Утилиты:**
+- `make clean` - очистка логов и отчетов coverage
 
 ## 🤖 Команды бота
 
@@ -102,29 +122,46 @@ systech-aidd-live/
 ├── src/                    # Исходный код
 │   ├── __init__.py
 │   ├── main.py            # Точка входа
-│   ├── config.py          # Конфигурация
+│   ├── config.py          # Конфигурация (dataclass)
+│   ├── exceptions.py      # Кастомные исключения
+│   ├── protocols.py       # Протоколы для DI
 │   ├── message.py         # Класс Message
-│   ├── message_handler.py # Обработка сообщений
+│   ├── command_handler.py # Обработка команд (/start, /help, /reset)
+│   ├── message_handler.py # Координация обработки сообщений
 │   ├── llm_client.py      # Работа с LLM API
 │   └── context_manager.py # Управление контекстом
-├── tests/                 # Тесты
+├── tests/                 # Тесты (100% coverage)
+│   ├── conftest.py        # Фикстуры pytest
+│   ├── test_*.py          # Unit тесты для каждого модуля
+│   └── test_integration.py # Интеграционные тесты
 ├── logs/                  # Логи
 ├── doc/                   # Документация
+│   ├── vision.md          # Техническое видение
+│   ├── tasklist.md        # План разработки MVP
+│   ├── tasklist_tech_debt.md # План устранения технического долга
+│   └── adrs/              # Architecture Decision Records
 ├── .env                   # Конфигурация (не в git)
 ├── .env.example           # Пример конфигурации
-├── pyproject.toml         # Зависимости
+├── pyproject.toml         # Зависимости + конфигурация инструментов
 ├── Makefile               # Команды автоматизации
 └── README.md
 ```
 
 ## 🏗️ Архитектурные особенности
 
-- **KISS-принцип** - никакого оверинжиниринга, только необходимое
+**Принципы:**
+- **SOLID** - Single Responsibility (CommandHandler), Dependency Inversion (Protocols)
+- **DRY** - нет дублирования кода
+- **KISS** - простота без оверинжиниринга
+- **Type Safety** - 100% type hints, mypy strict mode
+
+**Реализация:**
 - **Один класс = один файл** - строгое правило для читаемости
 - **Асинхронный код** - async/await везде (aiogram + AsyncOpenAI)
 - **Плоская структура** - все в `src/` без глубокой вложенности
+- **Dependency Injection** - через Protocols для тестируемости
+- **Custom Exceptions** - `ConfigError`, `LLMError` для явной обработки ошибок
 - **In-memory хранение** - контекст в памяти, без БД на этапе MVP
-- **Чистый Python** - без type hints и излишних абстракций
 
 ## 📊 Логирование
 
@@ -142,24 +179,59 @@ systech-aidd-live/
 
 ## 🧪 Тестирование
 
-Проект покрыт тестами:
+Проект покрыт comprehensive test suite с **100% code coverage**:
 
 ```bash
-make test
+make test-cov      # Unit тесты (быстро, ~2.8s)
+make test-all      # Все тесты включая integration (~4.5s)
 ```
 
-**4 теста:**
-- `test_context_manager_operations` - базовые операции с контекстом
-- `test_context_trimming` - обрезка контекста (5 сообщений)
-- `test_context_trimming_with_many_messages` - обрезка при 60+ сообщениях
-- `test_llm_client_response` - реальный запрос к LLM API
+**30 тестов:**
+- `test_message.py` (4 теста) - класс Message
+- `test_config.py` (5 тестов) - валидация конфигурации
+- `test_command_handler.py` (6 тестов) - обработка команд
+- `test_message_handler.py` (7 тестов) - координация с моками
+- `test_llm_client.py` (4 теста) - LLM клиент + error handling
+- `test_context_manager.py` (3 теста) - управление контекстом
+- `test_integration.py` (1 тест) - интеграционный тест
+
+**Подход:**
+- Fixtures в `conftest.py` для переиспользования
+- Моки (`AsyncMock`, `Mock`) для изоляции
+- Integration tests помечены отдельным marker
+- 100% statement coverage для всех модулей
 
 ## 📈 Статистика
 
-- **11 Python файлов**
-- **378 строк кода** (src + tests)
-- **4/4 тестов проходят** ✅
-- **5 итераций разработки** (от эхо-бота до полнофункционального AI-бота)
+- **19 Python файлов** (10 src + 9 tests)
+- **30/30 тестов проходят** ✅
+- **100% code coverage** ✅
+- **0 mypy errors** (strict mode) ✅
+- **0 ruff warnings** ✅
+- **8 итераций разработки** (MVP + устранение технического долга)
+
+## 🎯 Качество кода
+
+Проект следует строгим стандартам качества:
+
+**Метрики:**
+- ✅ Test Coverage: 100% (165/165 statements)
+- ✅ Type Hints: 100% всех функций и методов
+- ✅ Mypy: strict mode, 0 errors
+- ✅ Ruff: 0 warnings (E, F, I, N, UP, ANN, B, A, C4, DTZ, PIE, PT, RET, SIM, ARG, ERA, RUF)
+
+**Инструменты:**
+```bash
+make format    # Ruff форматирование
+make lint      # Ruff + Mypy проверка
+make check-all # Полная проверка (format + lint + test-cov)
+```
+
+**Подход:**
+- Итеративное устранение технического долга
+- ADR (Architecture Decision Records) для важных решений  
+- Continuous refactoring с зелеными тестами
+- Development workflow с автоматическими проверками
 
 ## 📚 Документация
 
@@ -170,15 +242,30 @@ make test
 
 ## 🚀 Разработка
 
-Проект разработан итеративно за 5 итераций:
+Проект разработан итеративно за **8 итераций**:
 
-0. **Эхо-бот** - базовая инфраструктура + эхо
+**MVP (Итерации 0-4):**
+0. **Эхо-бот** - базовая инфраструктура
 1. **Интеграция LLM** - подключение OpenAI API
 2. **История диалога** - сохранение контекста
 3. **Команды и обрезка** - управление контекстом
-4. **Финальное тестирование** - проверка всех сценариев
+4. **Финальное тестирование** - проверка сценариев
+
+**Устранение технического долга (Итерации 0-3):**
+0. **Инструменты качества** - ruff, mypy, pytest-cov, Makefile
+1. **Type hints + валидация** - dataclass Config, custom exceptions
+2. **Архитектурный рефакторинг** - SOLID, DRY, Protocols, CommandHandler
+3. **Улучшение тестирования** - 100% coverage, fixtures, моки
+4. **Финальная проверка** - документация, ADR, метрики
 
 Каждая итерация закоммичена в git с подробным описанием.
+
+**Development Workflow:**
+1. Написать код → `make format`
+2. Проверить качество → `make lint`
+3. Запустить тесты → `make test-cov`
+4. Проверить все → `make check-all`
+5. Закоммитить изменения
 
 ## 🤝 Вклад
 
