@@ -77,6 +77,11 @@ cp .env.example .env
 - `LLM_BASE_URL` - URL провайдера LLM
 - `LLM_MODEL` - название модели
 
+Опциональные переменные:
+- `SYSTEM_PROMPT_FILE` - путь к файлу с системным промптом (по умолчанию используется `prompts/system_prompt.txt`)
+- `SYSTEM_PROMPT` - системный промпт (fallback если файл не найден)
+- `MAX_CONTEXT_MESSAGES` - максимальное количество сообщений в контексте (по умолчанию 20)
+
 ### 3. Запуск
 
 ```bash
@@ -175,6 +180,7 @@ make test
 - `/start` - начать работу с ботом (приветствие)
 - `/help` - показать справку с описанием команд
 - `/reset` - очистить историю диалога и начать сначала
+- `/role` - показать информацию о роли ассистента (AICodingExpert)
 
 ## 💡 Пример использования
 
@@ -201,10 +207,12 @@ systech-aidd-live/
 │   ├── exceptions.py      # Кастомные исключения
 │   ├── protocols.py       # Протоколы для DI
 │   ├── message.py         # Класс Message
-│   ├── command_handler.py # Обработка команд (/start, /help, /reset)
+│   ├── command_handler.py # Обработка команд (/start, /help, /reset, /role)
 │   ├── message_handler.py # Координация обработки сообщений
 │   ├── llm_client.py      # Работа с LLM API
 │   └── context_manager.py # Управление контекстом
+├── prompts/               # Системные промпты
+│   └── system_prompt.txt  # Промпт AICodingExpert
 ├── tests/                 # Тесты (100% coverage)
 │   ├── conftest.py        # Фикстуры pytest
 │   ├── test_*.py          # Unit тесты для каждого модуля
