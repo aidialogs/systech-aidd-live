@@ -32,36 +32,38 @@ async def test_llm_client_response() -> None:
 @pytest.mark.asyncio
 async def test_llm_client_successful_response() -> None:
     """Test successful LLM response with mock."""
-    client = LLMClient(api_key="test", base_url="https://test.com", model="test-model")
+    with patch("src.llm_client.AsyncOpenAI") as mock_openai_class:
+        mock_client = AsyncMock()
+        mock_openai_class.return_value = mock_client
 
-    with patch.object(
-        client.client.chat.completions, "create", new_callable=AsyncMock
-    ) as mock_create:
+        client = LLMClient(api_key="test", base_url="https://test.com", model="test-model")
+
         mock_response = AsyncMock()
         mock_response.choices = [AsyncMock()]
         mock_response.choices[0].message.content = "Hello! How can I help you?"
-        mock_create.return_value = mock_response
+        mock_client.chat.completions.create.return_value = mock_response
 
         messages = [Message("user", "test")]
 
         response = await client.get_response(messages)
 
         assert response == "Hello! How can I help you?"
-        mock_create.assert_called_once()
+        mock_client.chat.completions.create.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_llm_client_empty_response() -> None:
     """Test that LLM client raises error when response content is None."""
-    client = LLMClient(api_key="test", base_url="https://test.com", model="test-model")
+    with patch("src.llm_client.AsyncOpenAI") as mock_openai_class:
+        mock_client = AsyncMock()
+        mock_openai_class.return_value = mock_client
 
-    with patch.object(
-        client.client.chat.completions, "create", new_callable=AsyncMock
-    ) as mock_create:
+        client = LLMClient(api_key="test", base_url="https://test.com", model="test-model")
+
         mock_response = AsyncMock()
         mock_response.choices = [AsyncMock()]
         mock_response.choices[0].message.content = None
-        mock_create.return_value = mock_response
+        mock_client.chat.completions.create.return_value = mock_response
 
         messages = [Message("user", "test")]
 
@@ -72,12 +74,13 @@ async def test_llm_client_empty_response() -> None:
 @pytest.mark.asyncio
 async def test_llm_client_api_error() -> None:
     """Test that LLM client handles API errors properly."""
-    client = LLMClient(api_key="test", base_url="https://test.com", model="test-model")
+    with patch("src.llm_client.AsyncOpenAI") as mock_openai_class:
+        mock_client = AsyncMock()
+        mock_openai_class.return_value = mock_client
 
-    with patch.object(
-        client.client.chat.completions, "create", new_callable=AsyncMock
-    ) as mock_create:
-        mock_create.side_effect = Exception("API connection failed")
+        client = LLMClient(api_key="test", base_url="https://test.com", model="test-model")
+
+        mock_client.chat.completions.create.side_effect = Exception("API connection failed")
 
         messages = [Message("user", "test")]
 

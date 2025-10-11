@@ -1,0 +1,42 @@
+{
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests",
+        "-v",
+        "--no-cov"
+    ],
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/src"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.terminal.activateEnvironment": false,
+    "python.terminal.executeInFileDir": false,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit",
+            "source.fixAll": "explicit"
+        }
+    },
+    "ruff.organizeImports": true,
+    "ruff.path": ["${workspaceFolder}/.venv/bin/ruff"],
+    "mypy-type-checker.interpreter": ["${workspaceFolder}/.venv/bin/python"],
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        ".pytest_cache": true,
+        ".mypy_cache": true,
+        ".ruff_cache": true
+    },
+    "terminal.integrated.env.osx": {
+        "UV_PROJECT_ENVIRONMENT": "${workspaceFolder}/.venv"
+    },
+    "terminal.integrated.env.linux": {
+        "UV_PROJECT_ENVIRONMENT": "${workspaceFolder}/.venv"
+    }
+}
+

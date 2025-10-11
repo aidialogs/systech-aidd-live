@@ -36,6 +36,20 @@ Telegram-бот с искусственным интеллектом, котор
 
 ## Быстрый старт
 
+### 0. Требования
+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) - современный менеджер пакетов Python
+
+Установка uv:
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# или через pip
+pip install uv
+```
+
 ### 1. Установка зависимостей
 
 ```bash
@@ -44,8 +58,10 @@ make install
 
 Или напрямую через uv:
 ```bash
-uv sync
+uv sync --extra dev
 ```
+
+Это создаст виртуальное окружение в `.venv/` и установит все зависимости.
 
 ### 2. Настройка
 
@@ -76,6 +92,64 @@ uv run python -m src.main
 
 Нажмите `Ctrl+C` в терминале.
 
+## 🔧 Настройка окружения
+
+### VSCode
+
+Проект настроен для работы с VSCode через `uv`. После установки зависимостей:
+
+1. Откройте проект в VSCode
+2. VSCode автоматически определит интерпретатор из `.venv/`
+3. Все настройки уже сконфигурированы в `.vscode/`:
+   - `settings.json` - настройки Python, ruff, mypy, pytest
+   - `launch.json` - конфигурации отладки (Run Bot, Run Tests, etc.)
+   - `tasks.json` - задачи для запуска команд через uv
+   - `extensions.json` - рекомендуемые расширения
+
+**Рекомендуемые расширения VSCode:**
+- Python (ms-python.python)
+- Pylance (ms-python.vscode-pylance)
+- Ruff (charliermarsh.ruff)
+- Python Debugger (ms-python.debugpy)
+
+VSCode предложит установить их автоматически при открытии проекта.
+
+**Доступные конфигурации запуска (F5):**
+- `Python: Run Bot` - запуск бота с отладкой
+- `Python: Run All Tests` - запуск всех тестов (unit + integration)
+- `Python: Run Tests (No Integration)` - только unit-тесты (быстро)
+- `Python: Run Integration Tests Only` - только integration тесты (реальные API вызовы)
+- `Python: Run Tests with Coverage` - тесты с coverage (без integration)
+- `Python: Debug Current Test File` - отладка текущего файла тестов
+
+**Доступные задачи (Cmd+Shift+P > Tasks: Run Task):**
+- `Install Dependencies` - установка зависимостей через uv
+- `Run Bot` - запуск бота
+- `Run Tests` - запуск unit тестов
+- `Run Tests (No Integration)` - только unit тесты
+- `Run Tests with Coverage` - тесты с coverage отчётом
+- `Run Integration Tests` - только integration тесты
+- `Format Code` - форматирование кода
+- `Lint Code` - проверка кода
+- `Check All` - полная проверка (format + lint + test)
+- `Clean Build Artifacts` - очистка временных файлов
+
+### Терминал
+
+Все команды в проекте должны запускаться через `uv run`:
+
+```bash
+# ❌ Неправильно
+python -m pytest
+pytest tests/
+
+# ✅ Правильно
+uv run pytest tests/
+make test
+```
+
+Это гарантирует, что используется правильное виртуальное окружение со всеми зависимостями.
+
 ## Команды
 
 **Разработка:**
@@ -83,9 +157,10 @@ uv run python -m src.main
 - `make run` - запуск бота
 
 **Тестирование:**
-- `make test` - запуск тестов
-- `make test-cov` - запуск тестов с измерением coverage (без integration тестов)
-- `make test-all` - запуск всех тестов (включая integration)
+- `make test` - запуск unit тестов (без integration)
+- `make test-cov` - запуск тестов с измерением coverage (без integration)
+- `make test-integration` - запуск только интеграционных тестов (реальные вызовы LLM)
+- `make test-all` - запуск всех тестов (unit + integration)
 
 **Качество кода:**
 - `make format` - автоформатирование кода (ruff format)
@@ -182,8 +257,10 @@ systech-aidd-live/
 Проект покрыт comprehensive test suite с **100% code coverage**:
 
 ```bash
-make test-cov      # Unit тесты (быстро, ~2.8s)
-make test-all      # Все тесты включая integration (~4.5s)
+make test              # Unit тесты (быстро, ~2.8s)
+make test-cov          # Unit тесты с coverage report
+make test-integration  # Только integration тесты (реальные API вызовы)
+make test-all          # Все тесты включая integration (~4.5s)
 ```
 
 **30 тестов:**
@@ -191,14 +268,15 @@ make test-all      # Все тесты включая integration (~4.5s)
 - `test_config.py` (5 тестов) - валидация конфигурации
 - `test_command_handler.py` (6 тестов) - обработка команд
 - `test_message_handler.py` (7 тестов) - координация с моками
-- `test_llm_client.py` (4 теста) - LLM клиент + error handling
+- `test_llm_client.py` (4 теста) - LLM клиент + error handling (3 unit + 1 integration)
 - `test_context_manager.py` (3 теста) - управление контекстом
-- `test_integration.py` (1 тест) - интеграционный тест
+- `test_integration.py` (1 тест) - интеграционный тест обрезки контекста
 
 **Подход:**
-- Fixtures в `conftest.py` для переиспользования
-- Моки (`AsyncMock`, `Mock`) для изоляции
-- Integration tests помечены отдельным marker
+- Fixtures в `conftest.py` для переиспользования (включая `clean_env` для изоляции окружения)
+- Моки (`AsyncMock`, `Mock`) для изоляции unit тестов
+- Integration tests помечены маркером `@pytest.mark.integration`
+- Integration тесты делают реальные вызовы к LLM API
 - 100% statement coverage для всех модулей
 
 ## 📈 Статистика

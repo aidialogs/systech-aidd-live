@@ -9,6 +9,21 @@ from src.context_manager import ContextManager
 from src.message import Message
 
 
+@pytest.fixture(autouse=True)
+def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Clean environment variables before each test to ensure isolation."""
+    env_vars_to_remove = [
+        "BOT_TOKEN",
+        "LLM_API_KEY",
+        "LLM_BASE_URL",
+        "LLM_MODEL",
+        "SYSTEM_PROMPT",
+        "MAX_CONTEXT_MESSAGES",
+    ]
+    for var in env_vars_to_remove:
+        monkeypatch.delenv(var, raising=False)
+
+
 @pytest.fixture
 def context_manager() -> ContextManager:
     """Create a real ContextManager instance for testing."""
