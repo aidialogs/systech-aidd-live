@@ -2,7 +2,8 @@ from src.context_manager import ContextManager
 from src.message import Message
 
 
-def test_context_manager_operations():
+def test_context_manager_operations() -> None:
+    """Test basic context manager operations."""
     cm = ContextManager(max_context_messages=20)
 
     # Проверка пустого контекста
@@ -46,7 +47,8 @@ def test_context_manager_operations():
     assert len(context2) == 1
 
 
-def test_context_trimming():
+def test_context_trimming() -> None:
+    """Test that context is trimmed when max_context_messages is exceeded."""
     cm = ContextManager(max_context_messages=5)
 
     # Добавить system prompt

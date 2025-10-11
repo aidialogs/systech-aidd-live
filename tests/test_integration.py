@@ -1,9 +1,8 @@
-import pytest
 from src.context_manager import ContextManager
 from src.message import Message
 
 
-def test_context_trimming_with_many_messages():
+def test_context_trimming_with_many_messages() -> None:
     """Тест обрезки контекста при большом количестве сообщений"""
     cm = ContextManager(max_context_messages=20)
 

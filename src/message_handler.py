@@ -1,15 +1,28 @@
 import logging
+
+from aiogram import types
+
+from src.context_manager import ContextManager
+from src.exceptions import LLMError
+from src.llm_client import LLMClient
 from src.message import Message
 
 
 class MessageHandler:
-    def __init__(self, llm_client, context_manager, system_prompt):
+    """Handles incoming messages and coordinates bot responses."""
+
+    def __init__(
+        self, llm_client: LLMClient, context_manager: ContextManager, system_prompt: str
+    ) -> None:
         self.llm_client = llm_client
         self.context_manager = context_manager
         self.system_prompt = system_prompt
 
-    async def handle_message(self, message, user_id, chat_id):
+    async def handle_message(self, message: types.Message, user_id: int, chat_id: int) -> str:
+        """Handle incoming message and return bot response."""
         text = message.text
+        if text is None:
+            return "Извините, я могу обрабатывать только текстовые сообщения."
 
         logging.info(f'Message from user_id={user_id} chat_id={chat_id}: "{text}"')
 
@@ -59,6 +72,9 @@ class MessageHandler:
 
             return response
 
-        except Exception as e:
-            logging.error(f"Error handling message: {str(e)}")
+        except LLMError as e:
+            logging.error(f"LLM error: {e!s}")
             return "Извините, не могу ответить прямо сейчас. Попробуйте чуть позже."
+        except Exception as e:
+            logging.error(f"Unexpected error handling message: {e!s}")
+            return "Извините, произошла ошибка. Попробуйте еще раз."

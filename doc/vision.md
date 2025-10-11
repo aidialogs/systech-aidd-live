@@ -49,14 +49,20 @@
 - **Asyncio** - асинхронный код (т.к. aiogram и openai async)
 
 ### Что НЕ используем (для простоты MVP)
-- ❌ Type hints - пока не усложняем код аннотациями типов
-- ❌ Линтеры и форматтеры - без автоматических проверок стиля
 - ❌ Сложные паттерны проектирования (фабрики, строители, стратегии)
 - ❌ DI-контейнеры и IoC
 - ❌ Избыточную абстракцию и многоуровневую иерархию классов
+- ❌ Pydantic models (используем простые dataclasses)
 - ❌ Микросервисы
 - ❌ Очереди сообщений
 - ❌ БД на первом этапе (только in-memory хранение контекста)
+
+### Что используем для качества кода
+- ✅ **Type hints** - обязательны для всех функций и методов
+- ✅ **Dataclasses** - для структур данных (Config)
+- ✅ **Ruff** - форматирование и линтинг
+- ✅ **Mypy** - проверка типов (strict mode)
+- ✅ **Custom exceptions** - для разных типов ошибок (ConfigError, LLMError)
 
 ### Организация кода
 - **Классы** - для логических компонентов (MessageHandler, LLMClient, ContextManager) и структур данных (Message)
@@ -78,7 +84,8 @@ systech-aidd-live/
 ├── src/
 │   ├── __init__.py
 │   ├── main.py              # Точка входа, инициализация, запуск polling
-│   ├── config.py            # Config класс - настройки из .env
+│   ├── config.py            # Config dataclass - настройки из .env с валидацией
+│   ├── exceptions.py        # Custom exceptions (ConfigError, LLMError)
 │   ├── message.py           # Message класс - структура сообщения
 │   ├── message_handler.py   # MessageHandler класс - обработка сообщений
 │   ├── llm_client.py        # LLMClient класс - работа с LLM API
@@ -148,7 +155,10 @@ User (Telegram)
 - Возврат текста ответа или exception при ошибке
 
 **Config** (конфигурация):
-- Загрузка параметров из .env
+- Загрузка параметров из .env с валидацией
+- Dataclass со строгой типизацией
+- Валидация обязательных переменных при старте (Config.from_env())
+- Бросает ConfigError если отсутствуют обязательные переменные
 - Хранение: bot_token, llm_api_key, llm_base_url, llm_model, system_prompt, max_context_messages
 
 ### Принципы архитектуры
@@ -163,15 +173,18 @@ User (Telegram)
 
 ### Класс Message
 
-Простой класс для структурирования сообщений:
+Простой класс для структурирования сообщений с type hints:
 
 ```python
 class Message:
-    def __init__(self, role, content):
+    """Represents a chat message with role and content."""
+    
+    def __init__(self, role: str, content: str) -> None:
         self.role = role        # "system" | "user" | "assistant"
         self.content = content  # str - текст сообщения
     
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str]:
+        """Convert message to dictionary format for API calls."""
         return {"role": self.role, "content": self.content}
 ```
 
@@ -208,7 +221,7 @@ class Message:
 - ❌ Базы данных (PostgreSQL, SQLite)
 - ❌ ORM (SQLAlchemy)
 - ❌ Персистентное хранилище
-- ❌ Сложные структуры данных (dataclasses с полями)
+- ❌ Pydantic models (используем простые dataclasses)
 
 ---
 
@@ -372,17 +385,29 @@ SYSTEM_PROMPT=Ты полезный AI-ассистент. Отвечай кра
 
 ### Класс Config
 
-Простой класс для загрузки и хранения настроек:
+Dataclass для загрузки и валидации настроек:
 
 ```python
+from dataclasses import dataclass
+from src.exceptions import ConfigError
+
+@dataclass
 class Config:
-    def __init__(self):
-        self.bot_token = os.getenv('BOT_TOKEN')
-        self.llm_api_key = os.getenv('LLM_API_KEY')
-        self.llm_base_url = os.getenv('LLM_BASE_URL')
-        self.llm_model = os.getenv('LLM_MODEL')
-        self.system_prompt = os.getenv('SYSTEM_PROMPT', 'Ты полезный AI-ассистент')
-        self.max_context_messages = int(os.getenv('MAX_CONTEXT_MESSAGES', '20'))
+    """Application configuration loaded from environment variables."""
+    
+    bot_token: str
+    llm_api_key: str
+    llm_base_url: str
+    llm_model: str
+    system_prompt: str
+    max_context_messages: int
+    
+    @classmethod
+    def from_env(cls) -> "Config":
+        """Load configuration from environment variables with validation."""
+        # Валидация обязательных полей
+        # Бросает ConfigError если переменные отсутствуют
+        ...
 ```
 
 ### Параметры конфигурации
@@ -430,7 +455,7 @@ load_dotenv()  # в main.py перед созданием Config
 ### Что НЕ используем
 
 - ❌ YAML/TOML конфигурационные файлы
-- ❌ Pydantic Settings / dataclasses для конфига
+- ❌ Pydantic Settings (используем простые dataclasses)
 - ❌ Конфиг-серверы (Consul, etcd)
 - ❌ Множественные окружения (dev/staging/prod)
 - ❌ Секреты-менеджеры (Vault, AWS Secrets Manager)

@@ -1,19 +1,21 @@
 import asyncio
 import logging
 import os
-from dotenv import load_dotenv
+
 from aiogram import Bot, Dispatcher, types
+from dotenv import load_dotenv
 
 from src.config import Config
-from src.message_handler import MessageHandler
-from src.llm_client import LLMClient
 from src.context_manager import ContextManager
+from src.llm_client import LLMClient
+from src.message_handler import MessageHandler
 
 
-async def main():
+async def main() -> None:
+    """Main entry point for the bot application."""
     load_dotenv()
 
-    config = Config()
+    config = Config.from_env()
 
     os.makedirs("logs", exist_ok=True)
 
@@ -37,7 +39,11 @@ async def main():
     message_handler = MessageHandler(llm_client, context_manager, config.system_prompt)
 
     @dp.message()
-    async def handle(message: types.Message):
+    async def handle(message: types.Message) -> None:
+        """Handle incoming Telegram messages."""
+        if message.from_user is None:
+            return
+
         user_id = message.from_user.id
         chat_id = message.chat.id
         response = await message_handler.handle_message(message, user_id, chat_id)
