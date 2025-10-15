@@ -1,0 +1,183 @@
+---
+alwaysApply: true
+---
+# Правила разработки Frontend
+
+> Техническое видение: @front-vision.md  
+> ADR стека: @ADR-06.md  
+> План разработки: @dashboard-tasklist.md
+
+## Главные принципы
+
+### KISS - Keep It Simple, Stupid
+- Никакого оверинжиниринга
+- Только необходимое для работы MVP
+- Простой и понятный код
+- Минимум абстракций
+
+### Организация кода
+- **Один компонент = один файл** - строгое правило
+- **Модульная структура** - components/, lib/, types/
+- **Минимум файлов** - только необходимое
+
+### TypeScript
+- Весь код на TypeScript
+- Strict mode обязателен
+- Типы для всех пропсов и функций
+
+## Что НЕ делать
+
+### ❌ Запрещено использовать:
+- Сложные state management (Redux, MobX)
+- Избыточную абстракцию и HOC
+- Class components (только functional)
+- any типы (использовать unknown)
+- CSS-in-JS библиотеки (только Tailwind)
+- Лишние зависимости
+
+### ✅ Разрешено использовать:
+- **TypeScript strict** - обязательно
+- **React hooks** - для state и эффектов
+- **Server Components** - где возможно
+- **Tailwind CSS** - для стилизации
+- **shadcn/ui** - готовые компоненты
+
+## Стиль кода
+
+### Компоненты
+- Functional components с TypeScript
+- Props через интерфейсы
+- Именование: PascalCase для компонентов
+- Файлы: kebab-case.tsx
+
+Пример:
+```typescript
+interface OverviewCardProps {
+  title: string;
+  value: number;
+  trend: number;
+}
+
+export function OverviewCard({ title, value, trend }: OverviewCardProps) {
+  return (
+    <div className="rounded-lg border bg-card">
+      {/* ... */}
+    </div>
+  )
+}
+```
+
+### Типизация
+- Обязательна для всех функций
+- Интерфейсы для props и данных
+- Типы в отдельных файлах (types/)
+- Использовать современный синтаксис
+
+### Структура файлов
+```
+dashboard/
+├── app/              # Next.js pages (App Router)
+├── components/       # React компоненты
+│   ├── ui/          # shadcn/ui компоненты
+│   └── *.tsx        # кастомные компоненты
+├── lib/             # утилиты и API клиент
+├── types/           # TypeScript типы
+└── public/          # статика
+```
+
+### Hooks правила
+- useState для локального state
+- useEffect с cleanup
+- Кастомные hooks начинаются с use
+- Минимум зависимостей в deps array
+
+### API вызовы
+- Через fetch в lib/api.ts
+- Обработка ошибок через try/catch
+- Loading states обязательны
+- Error states обязательны
+
+## Стилизация
+
+### Tailwind CSS
+- Utility classes в JSX
+- Нет inline styles
+- Использовать cn() для conditional classes
+- Responsive префиксы (sm:, md:, lg:)
+
+Пример:
+```typescript
+import { cn } from "@/lib/utils"
+
+export function Card({ className, ...props }: CardProps) {
+  return (
+    <div 
+      className={cn("rounded-lg border bg-card", className)}
+      {...props}
+    />
+  )
+}
+```
+
+### Темная/светлая тема
+- CSS переменные для цветов
+- dark: префикс для темной темы
+- Переключатель через next-themes
+
+## Инструменты качества
+
+### TypeScript
+- `pnpm type-check` - проверка типов
+- Strict mode в tsconfig.json
+- Все ошибки должны быть исправлены
+
+### Линтинг
+- ESLint (встроен в Next.js)
+- `pnpm lint` - проверка
+- Следовать рекомендациям
+
+### Форматирование
+- Prettier (опционально)
+- Единый стиль кода
+- 2 пробела для отступов (JS/TS convention)
+
+## Зависимости
+
+Основные:
+- Next.js 14+
+- React 18+
+- TypeScript 5+
+- Tailwind CSS
+- shadcn/ui компоненты
+
+Dev зависимости:
+- @types/node, @types/react
+- eslint, eslint-config-next
+- typescript
+
+## Структура компонентов
+
+### Один компонент = один файл
+```
+components/
+├── overview-cards.tsx     # OverviewCards component
+├── message-chart.tsx      # MessageChart component
+└── theme-toggle.tsx       # ThemeToggle component
+```
+
+### Переиспользование
+- Общие компоненты в components/
+- UI примитивы в components/ui/
+- Бизнес-логика в отдельных компонентах
+
+## Проверка перед коммитом
+
+- [ ] `pnpm type-check` - типы проверены
+- [ ] `pnpm lint` - линтинг пройден
+- [ ] `pnpm build` - сборка успешна
+- [ ] Один компонент = один файл
+- [ ] Все props типизированы
+- [ ] Нет any типов
+- [ ] Используется Tailwind CSS
+- [ ] Error states обработаны
+- [ ] Loading states добавлены
