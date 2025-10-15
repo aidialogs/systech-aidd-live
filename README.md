@@ -220,8 +220,11 @@ systech-aidd-live/
 ├── logs/                  # Логи
 ├── doc/                   # Документация
 │   ├── vision.md          # Техническое видение
-│   ├── tasklist.md        # План разработки MVP
-│   ├── tasklist_tech_debt.md # План устранения технического долга
+│   ├── roadmap.md         # Роадмап проекта
+│   ├── tasklists/         # Планы разработки по спринтам
+│   │   ├── tasklist-s0.md       # План MVP (спринт 0)
+│   │   └── tasklist_tech_debt-s0.md # План tech debt (спринт 0)
+│   ├── guides/            # Руководства для разработчиков
 │   └── adrs/              # Architecture Decision Records
 ├── .env                   # Конфигурация (не в git)
 ├── .env.example           # Пример конфигурации
@@ -322,9 +325,23 @@ make check-all # Полная проверка (format + lint + test-cov)
 ## 📚 Документация
 
 Подробная документация находится в каталоге `doc/`:
-- `vision.md` - техническое видение проекта
-- `tasklist.md` - итерационный план разработки с отчетом по прогрессу
-- `adrs/` - Architecture Decision Records
+
+**Гайды для разработчиков** (`doc/guides/`):
+- 🎨 [Visual Overview](doc/guides/00-visual-overview.md) - все диаграммы проекта
+- 🚀 [Getting Started](doc/guides/01-getting-started.md) - быстрый старт
+- 🗺️ [Repository Tour](doc/guides/02-repository-tour.md) - структура проекта
+- 🏗️ [Architecture Overview](doc/guides/03-architecture-overview.md) - архитектура
+- 💾 [Data Model](doc/guides/04-data-model.md) - модель данных
+- 🔧 [Development Workflow](doc/guides/06-development-workflow.md) - процесс разработки
+- 🧪 [Testing Strategy](doc/guides/07-testing-strategy.md) - тестирование
+- 👀 [Code Review Process](doc/guides/08-code-review-process.md) - ревью кода
+- 🔧 [Troubleshooting](doc/guides/12-troubleshooting.md) - решение проблем
+
+**Другая документация**:
+- [vision.md](doc/vision.md) - техническое видение проекта
+- [roadmap.md](doc/roadmap.md) - роадмап проекта со спринтами
+- [tasklists/](doc/tasklists/) - итерационные планы разработки по спринтам
+- [adrs/](doc/adrs/) - Architecture Decision Records
 
 ## 🚀 Разработка
 
