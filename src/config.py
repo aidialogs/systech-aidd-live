@@ -15,6 +15,8 @@ class Config:
     llm_model: str
     system_prompt: str
     max_context_messages: int
+    api_host: str
+    api_port: int
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -66,6 +68,10 @@ class Config:
         # Optional fields with defaults
         max_context_messages = int(os.getenv("MAX_CONTEXT_MESSAGES", "20"))
 
+        # API server configuration
+        api_host = os.getenv("API_HOST", "0.0.0.0")
+        api_port = int(os.getenv("API_PORT", "8000"))
+
         return cls(
             bot_token=bot_token,
             llm_api_key=llm_api_key,
@@ -73,4 +79,6 @@ class Config:
             llm_model=llm_model,
             system_prompt=system_prompt,
             max_context_messages=max_context_messages,
+            api_host=api_host,
+            api_port=api_port,
         )

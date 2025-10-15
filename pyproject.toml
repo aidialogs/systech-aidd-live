@@ -7,6 +7,8 @@ dependencies = [
     "aiogram>=3.0",
     "openai",
     "python-dotenv",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
 ]
 
 [project.optional-dependencies]
@@ -32,7 +34,7 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "ANN", "B", "A", "C4", "DTZ", "PIE", "PT", "RET", "SIM", "ARG", "ERA", "RUF"]
-ignore = ["RUF001"]  # Ignore ambiguous unicode characters (we use Cyrillic text)
+ignore = ["RUF001", "RUF003"]  # Ignore ambiguous unicode characters (we use Cyrillic text)
 
 [tool.mypy]
 python_version = "3.11"

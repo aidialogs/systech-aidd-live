@@ -75,6 +75,8 @@ def test_config_as_dataclass() -> None:
         llm_model="model",
         system_prompt="prompt",
         max_context_messages=10,
+        api_host="0.0.0.0",
+        api_port=8000,
     )
 
     assert config.bot_token == "token"

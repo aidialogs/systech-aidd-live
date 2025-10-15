@@ -1,6 +1,6 @@
 """Protocol interfaces for dependency injection."""
 
-from typing import Protocol
+from typing import Any, Protocol
 
 from src.message import Message
 
@@ -26,4 +26,12 @@ class ContextManagerProtocol(Protocol):
 
     def clear_context(self, user_id: int, chat_id: int) -> None:
         """Clear conversation context for a user in a specific chat."""
+        ...
+
+
+class StatsCollectorProtocol(Protocol):
+    """Protocol for stats collector implementations."""
+
+    async def collect_stats(self, time_range: str = "7d") -> dict[str, Any]:
+        """Collect statistics for the given time range."""
         ...
