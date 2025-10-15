@@ -14,12 +14,14 @@ make dashboard-install
 
 ### 2. Конфигурация
 
+Создайте файл `.env.local` в директории `dashboard/`:
+
 ```bash
 cd dashboard
-cp .env.example .env.local
+echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
 ```
 
-Убедитесь, что в `.env.local` указан правильный адрес API:
+Или создайте вручную файл `dashboard/.env.local` со следующим содержимым:
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
@@ -179,11 +181,67 @@ make dashboard-install
 
 ---
 
+## ✅ Реализованные Итерации
+
+### Итерация 7: ✅ Завершено - Интеграция с API
+
+Frontend Dashboard подключен к реальному backend API:
+
+**Что реализовано:**
+- ✅ Custom hook `useStats()` для загрузки данных из API
+- ✅ Компоненты `LoadingSkeleton` и `ErrorMessage`
+- ✅ `SectionCards` получает данные из API (overview метрики)
+- ✅ `ChartAreaInteractive` получает данные из API (message_activity)
+- ✅ Обработка состояний: loading, error, success
+- ✅ Retry функциональность при ошибках
+- ✅ TypeScript strict mode без ошибок
+- ✅ Адаптивный дизайн сохранен
+
+**Как протестировать:**
+
+1. Запустите Backend API:
+   ```bash
+   make run-api
+   # API запустится на http://localhost:8000
+   ```
+
+2. В отдельном терминале запустите Dashboard:
+   ```bash
+   make dashboard-dev
+   # Dashboard на http://localhost:3000
+   ```
+
+3. Откройте http://localhost:3000/dashboard
+
+4. Проверьте:
+   - Dashboard загружается с loading skeleton
+   - Отображаются реальные метрики из API
+   - График показывает данные message_activity
+   - Остановите API и обновите страницу → должно появиться сообщение об ошибке с кнопкой Retry
+   - Запустите API снова и нажмите Retry → данные загрузятся
+
+5. Проверьте API напрямую:
+   ```bash
+   curl http://localhost:8000/api/stats | jq
+   ```
+
+### Итерация 5-6: ✅ Завершено - Dashboard UI
+
+Dashboard UI реализован с использованием shadcn/ui:
+
+**Что реализовано:**
+- ✅ 4 карточки метрик с трендами
+- ✅ График активности сообщений с фильтрами 7d/30d
+- ✅ Темная тема по умолчанию с переключателем
+- ✅ Адаптивный layout (mobile/tablet/desktop)
+- ✅ TypeScript strict mode
+
 ## ✨ Следующие шаги
 
-1. Реализовать компоненты UI (Итерация 5)
-2. Интегрировать с API (Итерация 7)
-3. Финальное тестирование (Итерация 8)
+1. ✅ Итерация 5: Базовая структура UI - **Завершено**
+2. ✅ Итерация 6: Реализация Dashboard страницы - **Завершено**
+3. ✅ Итерация 7: Интеграция с реальным API - **Завершено**
+4. ⏳ Итерация 8: Финальное тестирование
 
 См. план: `doc/dashboard-tasklist.md`
 

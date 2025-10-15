@@ -14,9 +14,9 @@
 | 2️⃣ | Реализация Stats API (заглушка) | ✅ Завершено | 2025-10-15 | [План](.cursor/plans/dashboard-api-implementation-1c94bc81.plan.md) |
 | 3️⃣ | Концепция Frontend (front-vision.md) | ✅ Завершено | 2025-10-15 | [План](.cursor/plans/frontend-dashboard-init-0f5558f7.plan.md) |
 | 4️⃣ | Выбор стека и инициализация проекта | ✅ Завершено | 2025-10-15 | [План](.cursor/plans/frontend-dashboard-init-0f5558f7.plan.md) |
-| 5️⃣ | Базовая структура UI | ⏳ Ожидает | - | - |
-| 6️⃣ | Реализация Dashboard страницы | ⏳ Ожидает | - | - |
-| 7️⃣ | Интеграция с API | ⏳ Ожидает | - | - |
+| 5️⃣ | Базовая структура UI | ✅ Завершено | 2025-10-15 | - |
+| 6️⃣ | Реализация Dashboard страницы | ✅ Завершено | 2025-10-15 | - |
+| 7️⃣ | Интеграция с API | ✅ Завершено | 2025-10-15 | [План](.cursor/plans/api-integration-dashboard-2225adfe.plan.md) |
 | 8️⃣ | Финальное тестирование | ⏳ Ожидает | - | - |
 
 **Легенда статусов:**
@@ -400,13 +400,97 @@ dashboard/
 
 **Цель:** Подключить frontend к реальному backend API
 
-**Детали:** _Будут уточнены при реализации_
+**Статус:** ✅ Завершено (2025-10-15)
 
-**Основные задачи:**
-- [ ] Реализовать API клиент для `/api/stats`
-- [ ] Подключить реальные данные к компонентам
-- [ ] Обработка состояний: loading, error, success
-- [ ] Auto-refresh (опционально)
+**Реализовано:**
+
+**Новые файлы:**
+- [x] `dashboard/hooks/use-stats.ts` - Custom hook для загрузки данных
+  - useState для data, loading, error
+  - useEffect для загрузки и auto-refresh
+  - Функция refetch для повторной загрузки
+  - Обработка ошибок через try/catch
+
+- [x] `dashboard/components/loading-skeleton.tsx` - Loading состояние
+  - Skeleton компоненты для карточек (4 шт.)
+  - Skeleton для графика
+  - Сохраняет layout структуру (sidebar + header)
+
+- [x] `dashboard/components/error-message.tsx` - Error состояние
+  - Понятное сообщение об ошибке
+  - Кнопка Retry для повторной попытки
+  - Сохраняет layout структуру
+
+**Обновленные файлы:**
+- [x] `dashboard/components/section-cards.tsx`
+  - Добавлен props interface: `SectionCardsProps`
+  - Принимает `overview` данные из API
+  - Отображает 4 метрики: total_users, total_conversations, total_messages, avg_conversation_length
+  - Обработка trend_direction (up/down/neutral) с правильными иконками
+  - Форматирование значений (number/decimal)
+
+- [x] `dashboard/components/chart-area-interactive.tsx`
+  - Добавлен props interface: `ChartAreaInteractiveProps`
+  - Принимает `message_activity` из API
+  - Трансформация data_points в формат recharts
+  - Callback `onTimeRangeChange` для изменения периода
+  - Упрощен до одной линии (messages вместо desktop/mobile)
+
+- [x] `dashboard/app/dashboard/page.tsx`
+  - Добавлена директива "use client"
+  - Использует `useStats()` hook
+  - Обработка loading/error/success состояний
+  - Передача данных в компоненты через props
+  - Убрана DataTable (нет данных в API пока)
+
+- [x] `QUICKSTART-DASHBOARD.md`
+  - Добавлены инструкции по созданию .env.local
+  - Обновлена секция "Реализованные Итерации"
+  - Добавлены шаги тестирования интеграции
+
+**Технические детали:**
+- TypeScript strict mode - 0 ошибок
+- Обработка всех состояний: loading, error, success
+- Retry функциональность при ошибках
+- Адаптивный дизайн сохранен
+- Один компонент = один файл
+
+**Тест:**
+1. Создать `.env.local` в `dashboard/`:
+   ```bash
+   cd dashboard
+   echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
+   ```
+
+2. Запустить backend API:
+   ```bash
+   make run-api
+   ```
+
+3. В отдельном терминале запустить dashboard:
+   ```bash
+   make dashboard-dev
+   ```
+
+4. Открыть `http://localhost:3000/dashboard`
+
+5. Проверить:
+   - ✅ Loading skeleton появляется при загрузке
+   - ✅ Метрики отображаются из API (4 карточки)
+   - ✅ График показывает реальные данные message_activity
+   - ✅ Остановить API → должна появиться ошибка с кнопкой Retry
+   - ✅ Запустить API → нажать Retry → данные загружаются
+
+6. Проверить API напрямую:
+   ```bash
+   curl http://localhost:8000/api/stats | jq
+   ```
+
+7. Type check:
+   ```bash
+   cd dashboard
+   pnpm type-check
+   ```
 
 ---
 

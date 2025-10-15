@@ -12,10 +12,10 @@ class MockStatsCollector:
 
         # Overview metrics (hardcoded)
         overview = {
-            "total_users": {"value": 150, "trend": 12.5, "trend_direction": "up"},
-            "total_conversations": {"value": 234, "trend": -5.2, "trend_direction": "down"},
-            "total_messages": {"value": 3420, "trend": 8.3, "trend_direction": "up"},
-            "avg_conversation_length": {"value": 14.6, "trend": 2.1, "trend_direction": "up"},
+            "total_users": {"value": 250, "trend": 12.5, "trend_direction": "up"},
+            "total_conversations": {"value": 334, "trend": -5.2, "trend_direction": "down"},
+            "total_messages": {"value": 13420, "trend": 8.3, "trend_direction": "up"},
+            "avg_conversation_length": {"value": 114.6, "trend": 2.1, "trend_direction": "up"},
         }
 
         # Message activity data points (generated based on time_range)
@@ -23,10 +23,10 @@ class MockStatsCollector:
         now = datetime.now(UTC)
 
         # Hardcoded message counts for variety
-        message_counts = [45, 52, 38, 61, 49, 55, 43]  # для 7d
+        message_counts = [145, 52, 38, 61, 49, 55, 43]  # для 7d
         if days == 30:
             message_counts = [
-                45,
+                145,
                 52,
                 38,
                 61,
@@ -50,12 +50,12 @@ class MockStatsCollector:
                 41,
                 59,
                 48,
-                52,
+                152,
                 43,
-                60,
+                160,
                 49,
-                55,
-                47,
+                155,
+                147,
             ]
 
         data_points = []
