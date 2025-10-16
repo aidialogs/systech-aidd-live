@@ -12,7 +12,7 @@ class CommandHandler:
         self.context_manager = context_manager
         self.system_prompt = system_prompt
 
-    def handle_command(self, text: str, user_id: int, chat_id: int) -> str | None:
+    async def handle_command(self, text: str, user_id: int, chat_id: int) -> str | None:
         """Handle command and return response, or None if not a command."""
         if text == "/start":
             logging.info(f"Command /start from user_id={user_id}")
@@ -24,7 +24,7 @@ class CommandHandler:
 
         if text == "/reset":
             logging.info(f"Command /reset from user_id={user_id}")
-            self.context_manager.clear_context(user_id, chat_id)
+            await self.context_manager.clear_context(user_id, chat_id)
             return "История диалога очищена. Начнем сначала!"
 
         if text == "/role":

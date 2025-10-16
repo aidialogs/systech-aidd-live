@@ -1,26 +1,24 @@
 """Tests for CommandHandler class."""
 
+import pytest
+
 from src.command_handler import CommandHandler
 from src.context_manager import ContextManager
 
 
-def test_command_start() -> None:
+@pytest.mark.asyncio
+async def test_command_start(command_handler: CommandHandler) -> None:
     """Test /start command."""
-    cm = ContextManager(max_context_messages=20)
-    handler = CommandHandler(cm)
-
-    response = handler.handle_command("/start", 123, 456)
+    response = await command_handler.handle_command("/start", 123, 456)
 
     assert response is not None
     assert "Привет" in response or "AI-ассистент" in response
 
 
-def test_command_help() -> None:
+@pytest.mark.asyncio
+async def test_command_help(command_handler: CommandHandler) -> None:
     """Test /help command."""
-    cm = ContextManager(max_context_messages=20)
-    handler = CommandHandler(cm)
-
-    response = handler.handle_command("/help", 123, 456)
+    response = await command_handler.handle_command("/help", 123, 456)
 
     assert response is not None
     assert "/start" in response
@@ -28,51 +26,47 @@ def test_command_help() -> None:
     assert "/reset" in response
 
 
-def test_command_reset() -> None:
+@pytest.mark.asyncio
+async def test_command_reset(
+    context_manager: ContextManager, command_handler: CommandHandler
+) -> None:
     """Test /reset command."""
-    cm = ContextManager(max_context_messages=20)
-    handler = CommandHandler(cm)
-
     # Add some messages first
     from src.message import Message
 
-    cm.add_message(123, 456, Message("user", "Hello"))
-    assert len(cm.get_context(123, 456)) == 1
+    await context_manager.add_message(123, 456, Message("user", "Hello"))
+    context = await context_manager.get_context(123, 456)
+    assert len(context) == 1
 
     # Reset
-    response = handler.handle_command("/reset", 123, 456)
+    response = await command_handler.handle_command("/reset", 123, 456)
 
     assert response is not None
     assert "очищена" in response.lower() or "cleared" in response.lower()
-    assert len(cm.get_context(123, 456)) == 0
+    context = await context_manager.get_context(123, 456)
+    assert len(context) == 0
 
 
-def test_non_command_returns_none() -> None:
+@pytest.mark.asyncio
+async def test_non_command_returns_none(command_handler: CommandHandler) -> None:
     """Test that non-command text returns None."""
-    cm = ContextManager(max_context_messages=20)
-    handler = CommandHandler(cm)
-
-    response = handler.handle_command("Hello, how are you?", 123, 456)
+    response = await command_handler.handle_command("Hello, how are you?", 123, 456)
 
     assert response is None
 
 
-def test_invalid_command_returns_none() -> None:
+@pytest.mark.asyncio
+async def test_invalid_command_returns_none(command_handler: CommandHandler) -> None:
     """Test that invalid command returns None."""
-    cm = ContextManager(max_context_messages=20)
-    handler = CommandHandler(cm)
-
-    response = handler.handle_command("/unknown", 123, 456)
+    response = await command_handler.handle_command("/unknown", 123, 456)
 
     assert response is None
 
 
-def test_get_help_text() -> None:
+@pytest.mark.asyncio
+async def test_get_help_text(command_handler: CommandHandler) -> None:
     """Test _get_help_text private method."""
-    cm = ContextManager(max_context_messages=20)
-    handler = CommandHandler(cm)
-
-    help_text = handler._get_help_text()
+    help_text = command_handler._get_help_text()
 
     assert "Доступные команды" in help_text
     assert "/start" in help_text
@@ -81,24 +75,24 @@ def test_get_help_text() -> None:
     assert "/role" in help_text
 
 
-def test_command_role() -> None:
+@pytest.mark.asyncio
+async def test_command_role(context_manager: ContextManager) -> None:
     """Test /role command returns system prompt."""
-    cm = ContextManager(max_context_messages=20)
     system_prompt = "I am a test AI assistant"
-    handler = CommandHandler(cm, system_prompt)
+    handler = CommandHandler(context_manager, system_prompt)
 
-    response = handler.handle_command("/role", 123, 456)
+    response = await handler.handle_command("/role", 123, 456)
 
     assert response is not None
     assert system_prompt in response
 
 
-def test_help_includes_role_command() -> None:
+@pytest.mark.asyncio
+async def test_help_includes_role_command(context_manager: ContextManager) -> None:
     """Test /help command includes /role in the list."""
-    cm = ContextManager(max_context_messages=20)
-    handler = CommandHandler(cm, "Test prompt")
+    handler = CommandHandler(context_manager, "Test prompt")
 
-    response = handler.handle_command("/help", 123, 456)
+    response = await handler.handle_command("/help", 123, 456)
 
     assert response is not None
     assert "/role" in response

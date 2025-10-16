@@ -11,12 +11,14 @@ Telegram-бот с искусственным интеллектом, котор
 ## ✨ Возможности
 
 - 🤖 **Интеграция с LLM** - подключение к любому OpenAI-compatible API (OpenRouter, OpenAI, и др.)
-- 💬 **Управление контекстом** - бот помнит историю диалога (in-memory)
+- 💬 **Управление контекстом** - бот помнит историю диалога с персистентным хранением
+- 💾 **База данных** - PostgreSQL для надежного хранения истории диалогов
 - ✂️ **Автоматическая обрезка** - контекст ограничен 20 сообщениями для экономии токенов
-- 📝 **Команды управления** - `/start`, `/help`, `/reset`
+- 📝 **Команды управления** - `/start`, `/help`, `/reset`, `/role`
+- 🗑️ **Soft delete** - логическое удаление данных для возможной аналитики
 - 📊 **Полное логирование** - все операции записываются в файл и консоль
 - ⚡ **Асинхронная архитектура** - быстрая обработка запросов
-- 🧪 **Покрытие тестами** - unit и интеграционные тесты
+- 🧪 **Покрытие тестами** - unit и интеграционные тесты (81%+ coverage)
 
 ## Технологии
 
@@ -26,6 +28,12 @@ Telegram-бот с искусственным интеллектом, котор
 - openai - Python SDK для работы с LLM
 - python-dotenv - загрузка переменных окружения
 - uv - современный менеджер пакетов
+
+**Database:**
+- PostgreSQL 16+ - надежная СУБД для персистентного хранения
+- SQLAlchemy 2.0 - async ORM с поддержкой type hints
+- asyncpg - высокопроизводительный async драйвер для PostgreSQL
+- Alembic - управление миграциями базы данных
 
 **Code Quality:**
 - ruff - быстрый линтер и форматтер
@@ -40,6 +48,7 @@ Telegram-бот с искусственным интеллектом, котор
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) - современный менеджер пакетов Python
+- Docker + Docker Compose - для запуска PostgreSQL (опционально для dev)
 
 Установка uv:
 ```bash
@@ -48,6 +57,14 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # или через pip
 pip install uv
+```
+
+Установка Docker:
+```bash
+# macOS
+brew install --cask docker
+
+# Или скачайте с https://www.docker.com/products/docker-desktop
 ```
 
 ### 1. Установка зависимостей
@@ -81,6 +98,8 @@ cp .env.example .env
 - `SYSTEM_PROMPT_FILE` - путь к файлу с системным промптом (по умолчанию используется `prompts/system_prompt.txt`)
 - `SYSTEM_PROMPT` - системный промпт (fallback если файл не найден)
 - `MAX_CONTEXT_MESSAGES` - максимальное количество сообщений в контексте (по умолчанию 20)
+- `DATABASE_URL` - строка подключения к PostgreSQL (см. секцию "База данных")
+- `DATABASE_ECHO` - выводить SQL запросы в логи (по умолчанию `False`)
 
 ### 3. Запуск
 
@@ -93,9 +112,87 @@ make run
 uv run python -m src.main
 ```
 
-### 4. Остановка
+### 4. База данных
+
+Проект использует PostgreSQL для персистентного хранения истории диалогов.
+
+#### Запуск PostgreSQL (через Docker)
+
+```bash
+make db-up
+```
+
+Это запустит PostgreSQL 16 в Docker контейнере с параметрами из `docker-compose.yml`.
+
+#### Применение миграций
+
+После первого запуска базы данных необходимо применить миграции:
+
+```bash
+make db-migrate
+```
+
+Это создаст необходимые таблицы в базе данных.
+
+#### Настройка DATABASE_URL
+
+Добавьте в `.env`:
+```bash
+DATABASE_URL=postgresql+asyncpg://systech_user:systech_password@localhost:5432/systech_aidd
+DATABASE_ECHO=False  # True для отладки SQL запросов
+```
+
+**Для production используйте безопасный пароль!**
+
+#### Полезные команды для БД
+
+```bash
+make db-up              # Запуск PostgreSQL
+make db-down            # Остановка PostgreSQL
+make db-migrate         # Применить миграции
+make db-rollback        # Откатить последнюю миграцию
+make db-revision message="название"  # Создать новую миграцию
+make db-shell           # Подключиться к PostgreSQL через psql
+make db-logs            # Посмотреть логи PostgreSQL
+```
+
+#### Структура базы данных
+
+**Таблица `users`:**
+- `id` (PK) - Telegram user_id
+- `created_at` - дата создания
+- `is_deleted` - флаг soft delete
+
+**Таблица `messages`:**
+- `id` (PK) - автоинкремент
+- `user_id` (FK) - ссылка на user
+- `chat_id` - Telegram chat_id
+- `role` - роль сообщения (system/user/assistant)
+- `content` - текст сообщения
+- `content_length` - длина сообщения
+- `created_at` - дата создания
+- `is_deleted` - флаг soft delete
+
+Подробности см. в [ADR-06: Выбор PostgreSQL + SQLAlchemy](doc/adrs/ADR-06.md).
+
+### 5. Остановка
 
 Нажмите `Ctrl+C` в терминале.
+
+## 📚 Руководства для разработчиков
+
+Для полного понимания проекта создан набор подробных гайдов:
+
+- **[GUIDE-01: Getting Started](doc/guides/01-getting-started.md)** — запустить бота за 15 минут
+- **[GUIDE-02: Архитектура](doc/guides/02-architecture.md)** — понять структуру системы
+- **[GUIDE-03: Визуальный обзор](doc/guides/03-visual-overview.md)** — 26 диаграмм по SDLC
+- **[GUIDE-06: Codebase Tour](doc/guides/06-codebase-tour.md)** — детальный обзор всех файлов
+- **[GUIDE-07: Development Workflow](doc/guides/07-development-workflow.md)** — процесс разработки
+- **[GUIDE-08: Testing](doc/guides/08-testing.md)** — стратегия тестирования
+
+**➡️ [Полный список гайдов](doc/guides/README.md)**
+
+Рекомендуется пройти гайды последовательно (3-4 часа).
 
 ## 🔧 Настройка окружения
 
@@ -322,6 +419,7 @@ make check-all # Полная проверка (format + lint + test-cov)
 ## 📚 Документация
 
 Подробная документация находится в каталоге `doc/`:
+- **`guides/`** - 6 подробных гайдов для онбординга и разработки ([полный список](doc/guides/README.md))
 - `vision.md` - техническое видение проекта
 - `tasklist.md` - итерационный план разработки с отчетом по прогрессу
 - `adrs/` - Architecture Decision Records
