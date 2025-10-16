@@ -14,24 +14,28 @@
 ### 4 карточки метрик
 
 #### 1. Total Users
+
 - **Значение**: Общее количество зарегистрированных пользователей
 - **Тренд**: Изменение за последние 30 дней (%)
 - **Описание**: Total registered users
 - **Источник данных**: Таблица `users` (количество записей с `is_deleted = false`)
 
 #### 2. Active Dialogs
+
 - **Значение**: Количество уникальных активных диалогов
 - **Тренд**: Изменение за последние 30 дней (%)
 - **Описание**: Unique active conversations
 - **Источник данных**: Уникальные пары `(user_id, chat_id)` в таблице `messages`
 
 #### 3. Total Messages
+
 - **Значение**: Общее количество сообщений
 - **Тренд**: Изменение за последние 30 дней (%)
 - **Описание**: All messages exchanged
 - **Источник данных**: Таблица `messages` (количество записей с `is_deleted = false`)
 
 #### 4. Avg Message Length
+
 - **Значение**: Средняя длина сообщения (в символах)
 - **Тренд**: Изменение за последние 30 дней (%)
 - **Описание**: Average characters per message
@@ -41,7 +45,7 @@
 
 - **Тип**: Area/Line chart с временным рядом
 - **Данные**: Количество сообщений по дням
-- **Периоды**: 
+- **Периоды**:
   - Last 7 days (7 точек данных)
   - Last 30 days (30 точек данных)
 - **Переключение**: Кнопки-переключатели для выбора периода
@@ -82,15 +86,17 @@
 ## UI компоненты
 
 ### MetricCard компонент
+
 - **Title**: Название метрики
 - **Value**: Основное значение (форматированное с разделителями тысяч)
 - **Trend**: Процент изменения с иконкой (↑ для роста, ↓ для падения)
 - **Description**: Краткое описание метрики
-- **Цвет тренда**: 
+- **Цвет тренда**:
   - Зелёный для положительного тренда
   - Красный для отрицательного тренда
 
 ### Chart компонент
+
 - **Title**: "Messages Over Time"
 - **Period Switcher**: Кнопки для выбора периода (7d / 30d)
 - **Chart Type**: Area chart или Line chart
@@ -107,12 +113,12 @@
 interface MetricCard {
   title: string;
   value: string;
-  trend: string;        // "+12.5%", "-20%", etc
+  trend: string; // "+12.5%", "-20%", etc
   description: string;
 }
 
 interface ChartDataPoint {
-  date: string;         // ISO 8601 UTC: "2025-01-05T00:00:00Z"
+  date: string; // ISO 8601 UTC: "2025-01-05T00:00:00Z"
   value: number;
 }
 
@@ -121,8 +127,8 @@ interface DashboardStats {
   active_dialogs: MetricCard;
   total_messages: MetricCard;
   avg_message_length: MetricCard;
-  messages_chart_7d: ChartDataPoint[];   // 7 элементов
-  messages_chart_30d: ChartDataPoint[];  // 30 элементов
+  messages_chart_7d: ChartDataPoint[]; // 7 элементов
+  messages_chart_30d: ChartDataPoint[]; // 30 элементов
 }
 ```
 
@@ -175,6 +181,7 @@ interface DashboardStats {
 ## Технические требования
 
 ### Frontend
+
 - **Framework**: TBD (будет определён в Sprint 2)
 - **UI Library**: shadcn/ui компоненты
 - **Charts**: TBD (recharts, visx или аналог)
@@ -182,6 +189,7 @@ interface DashboardStats {
 - **Responsive**: Mobile-first подход
 
 ### Backend (Mock API)
+
 - **Framework**: FastAPI
 - **Port**: 8000
 - **CORS**: Разрешить `http://localhost:3000`
@@ -211,4 +219,3 @@ interface DashboardStats {
 **Версия документа**: 1.0  
 **Дата создания**: 2025-10-16  
 **Статус**: Активные требования для Sprint 1
-
