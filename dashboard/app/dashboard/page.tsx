@@ -7,6 +7,7 @@ import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
 import { LoadingSkeleton } from "@/components/loading-skeleton"
 import { ErrorMessage } from "@/components/error-message"
+import { FloatingChatButton } from "@/components/floating-chat-button"
 import {
   SidebarInset,
   SidebarProvider,
@@ -56,6 +57,7 @@ export default function Page() {
           </div>
         </div>
       </SidebarInset>
+      <FloatingChatButton />
     </SidebarProvider>
   )
 }
