@@ -29,6 +29,7 @@
 #
 .PHONY: install run test test-cov test-all test-integration format lint check-all clean
 .PHONY: db-up db-down db-migrate db-rollback db-revision db-shell db-logs
+.PHONY: api-run api-dev api-test
 
 install:
 	uv sync --extra dev
@@ -81,3 +82,13 @@ db-shell:
 
 db-logs:
 	docker compose logs -f postgres
+
+# API server commands (separate from bot)
+api-run:
+	uv run python -m src.api.main
+
+api-dev:
+	uv run uvicorn src.api.server:app --reload --port 8000
+
+api-test:
+	curl -s http://localhost:8000/api/stats | python -m json.tool
