@@ -16,14 +16,14 @@ class LLMClientProtocol(Protocol):
 class ContextManagerProtocol(Protocol):
     """Protocol for context manager implementations."""
 
-    def add_message(self, user_id: int, chat_id: int, message: Message) -> None:
+    async def add_message(self, user_id: int, chat_id: int, message: Message) -> None:
         """Add a message to the conversation context."""
         ...
 
-    def get_context(self, user_id: int, chat_id: int) -> list[Message]:
+    async def get_context(self, user_id: int, chat_id: int) -> list[Message]:
         """Get conversation context for a user in a specific chat."""
         ...
 
-    def clear_context(self, user_id: int, chat_id: int) -> None:
+    async def clear_context(self, user_id: int, chat_id: int) -> None:
         """Clear conversation context for a user in a specific chat."""
         ...

@@ -7,6 +7,9 @@
 - **aiogram 3.x** - асинхронная библиотека для Telegram Bot API
 - **openai** - Python SDK для работы с LLM через OpenAI Compatible API
 - **python-dotenv** - загрузка переменных окружения из .env файла
+- **PostgreSQL 16** - реляционная СУБД для персистентного хранения
+- **psycopg[binary] 3.x** - асинхронный драйвер для PostgreSQL
+- **yoyo-migrations** - инструмент для управления миграциями БД
 
 ### Управление зависимостями и окружением
 - **uv** - современный менеджер пакетов и виртуальных окружений
@@ -33,9 +36,9 @@
 - Запуск через Makefile: `make format`, `make lint`, `make test-cov`
 - Без pre-commit hooks - все запускается вручную
 
-### Деплой
-- **Локальный запуск** - `python -m src.main`
-- Без Docker на первом этапе
+### Инфраструктура и деплой
+- **Docker Compose** - локальная разработка с PostgreSQL
+- **Локальный запуск бота** - `python -m src.main`
 - Запуск вручную, без автоматизации CI/CD
 
 ---
@@ -48,14 +51,14 @@
 - **Явное лучше неявного** - простой и понятный код
 - **Asyncio** - асинхронный код (т.к. aiogram и openai async)
 
-### Что НЕ используем (для простоты MVP)
+### Что НЕ используем (для простоты)
 - ❌ Сложные паттерны проектирования (фабрики, строители, стратегии)
 - ❌ DI-контейнеры и IoC
 - ❌ Избыточную абстракцию и многоуровневую иерархию классов
 - ❌ Pydantic models (используем простые dataclasses)
+- ❌ ORM (SQLAlchemy ORM) - используем прямые SQL запросы
 - ❌ Микросервисы
 - ❌ Очереди сообщений
-- ❌ БД на первом этапе (только in-memory хранение контекста)
 
 ### Что используем для качества кода
 - ✅ **Type hints** - обязательны для всех функций и методов
@@ -91,16 +94,21 @@ systech-aidd-live/
 │   ├── command_handler.py   # CommandHandler класс - обработка команд (/start, /help, /reset, /role)
 │   ├── message_handler.py   # MessageHandler класс - координация обработки сообщений
 │   ├── llm_client.py        # LLMClient класс - работа с LLM API
-│   └── context_manager.py   # ContextManager класс - управление контекстом
+│   ├── context_manager.py   # ContextManager класс - управление контекстом
+│   └── database.py          # DatabaseRepository класс - работа с PostgreSQL
+├── migrations/              # Yoyo миграции БД
+│   └── 001_initial_schema.sql
 ├── prompts/
 │   └── system_prompt.txt    # Системный промпт для роли AICodingExpert
 ├── tests/
 │   ├── __init__.py
 │   ├── test_llm_client.py
-│   └── test_context_manager.py
+│   ├── test_context_manager.py
+│   └── test_database.py
 ├── logs/                    # Директория для логов (создается автоматически)
 │   └── app.log
-├── .env.example             # Пример конфигурации
+├── docker-compose.yml       # Docker Compose для PostgreSQL
+├── yoyo.ini                 # Конфигурация Yoyo migrations
 ├── .gitignore
 ├── pyproject.toml           # Зависимости проекта
 ├── uv.lock                  # Зафиксированные версии
@@ -126,8 +134,9 @@ User (Telegram)
      ↓          ↓         ↓
 [CommandHandler] [ContextManager] [LLMClient]
      ↓              ↓                  ↓
-[/start,/help]  [In-Memory Dict]  [OpenAI API]
-[/reset]
+[/start,/help]  [DatabaseRepository] [OpenAI API]
+[/reset]           ↓
+                [PostgreSQL]
 ```
 
 ### Поток обработки сообщения
@@ -157,9 +166,15 @@ User (Telegram)
 - Для команды /role использует Config.system_prompt (содержимое файла промпта)
 
 **ContextManager** (хранилище):
-- Хранит историю диалогов в памяти (dict: (user_id, chat_id) → list of Message)
+- Управляет историей диалогов через DatabaseRepository
 - Ограничение контекста: последние N сообщений (например, 20)
 - Очистка контекста по команде
+- Асинхронные методы для работы с БД
+
+**DatabaseRepository** (слой данных):
+- Работа с PostgreSQL через psycopg3 connection pool
+- CRUD операции для messages: save_message, get_messages, delete_messages
+- Прямые SQL запросы без ORM
 
 **LLMClient** (клиент внешнего API):
 - Отправка запросов к OpenAI Compatible API
@@ -171,7 +186,7 @@ User (Telegram)
 - Dataclass со строгой типизацией
 - Валидация обязательных переменных при старте (Config.from_env())
 - Бросает ConfigError если отсутствуют обязательные переменные
-- Хранение: bot_token, llm_api_key, llm_base_url, llm_model, system_prompt, max_context_messages
+- Хранение: bot_token, llm_api_key, llm_base_url, llm_model, system_prompt, max_context_messages, database_url
 - System prompt загружается из файла (prompts/system_prompt.txt) или из переменной окружения SYSTEM_PROMPT
 
 ### Принципы архитектуры
@@ -179,8 +194,8 @@ User (Telegram)
 - **SRP (Single Responsibility Principle)** - каждый класс имеет одну ответственность
 - **DRY (Don't Repeat Yourself)** - нет дублирования кода
 - **DIP (Dependency Inversion)** - зависимости через Protocol интерфейсы (для тестируемости)
-- **Синхронность операций** - последовательная обработка без очередей
-- **In-memory state** - без БД, состояние в памяти процесса
+- **Асинхронность** - async/await для работы с БД и внешними API
+- **Персистентность** - PostgreSQL для хранения истории диалогов
 - **Stateless LLM** - LLMClient не хранит состояние
 
 ### Protocols для Dependency Injection
@@ -215,40 +230,73 @@ class Message:
         return {"role": self.role, "content": self.content}
 ```
 
-### Структура хранилища контекста
+### Схема базы данных PostgreSQL
 
-```python
-# ContextManager.contexts
-{
-    (user_id, chat_id): [
-        Message("system", "Ты полезный ассистент..."),
-        Message("user", "Привет"),
-        Message("assistant", "Здравствуйте!"),
-        ...
-    ]
-}
+Простая таблица `messages` для хранения истории диалогов:
+
+```sql
+CREATE TABLE messages (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    chat_id BIGINT NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Индексы для эффективных запросов
+CREATE INDEX idx_user_chat ON messages(user_id, chat_id);
+CREATE INDEX idx_created_at ON messages(created_at);
 ```
 
-**Ключ хранилища:**
-- `(user_id, chat_id)` - кортеж из двух int
+**Поля:**
+- `id` - автоинкрементный первичный ключ
 - `user_id` - ID пользователя из Telegram (message.from_user.id)
 - `chat_id` - ID чата из Telegram (message.chat.id)
+- `role` - роль сообщения ("system", "user", "assistant")
+- `content` - текст сообщения
+- `created_at` - временная метка создания (для сортировки)
 
-**Значение:**
-- Список объектов Message
+**Индексы:**
+- `idx_user_chat` - быстрый поиск по комбинации (user_id, chat_id)
+- `idx_created_at` - сортировка сообщений по времени
+
+### DatabaseRepository
+
+Простой репозиторий для работы с БД:
+
+```python
+class DatabaseRepository:
+    def __init__(self, pool: AsyncConnectionPool) -> None:
+        self.pool = pool
+    
+    async def save_message(user_id: int, chat_id: int, role: str, content: str) -> None:
+        """Сохранить сообщение в БД"""
+    
+    async def get_messages(user_id: int, chat_id: int, limit: int) -> list[Message]:
+        """Получить последние N сообщений для пользователя"""
+    
+    async def delete_messages(user_id: int, chat_id: int) -> None:
+        """Удалить все сообщения пользователя (команда /reset)"""
+```
 
 ### Ограничения и правила
 
 - **max_context_messages**: 20 сообщений (настраивается через Config)
 - При превышении лимита - удаляются старые сообщения (кроме system)
-- System prompt всегда остается первым в списке
-- Хранение только в оперативной памяти (при перезапуске - потеря данных)
+- System prompt всегда сохраняется первым
+- История сохраняется между перезапусками бота
+- Используется connection pool для эффективной работы с БД
 
-### Без использования:
-- ❌ Базы данных (PostgreSQL, SQLite)
-- ❌ ORM (SQLAlchemy)
-- ❌ Персистентное хранилище
-- ❌ Pydantic models (используем простые dataclasses)
+### Что используем:
+- ✅ **PostgreSQL** - персистентное хранилище
+- ✅ **psycopg3** - асинхронный драйвер
+- ✅ **Прямые SQL запросы** - без ORM
+- ✅ **Yoyo migrations** - версионирование схемы БД
+
+### Что НЕ используем:
+- ❌ ORM (SQLAlchemy ORM) - избегаем избыточной абстракции
+- ❌ Pydantic models - используем простые dataclasses
 
 ---
 
@@ -453,6 +501,7 @@ class Config:
 - `LLM_API_KEY` - API ключ для OpenRouter
 - `LLM_BASE_URL` - URL провайдера LLM (https://openrouter.ai/api/v1)
 - `LLM_MODEL` - название модели (например: anthropic/claude-3.5-sonnet)
+- `DATABASE_URL` - строка подключения к PostgreSQL (postgresql://user:password@host:port/database)
 
 **Опциональные параметры (с дефолтами):**
 - `SYSTEM_PROMPT` - системный промпт (default: загружается из prompts/system_prompt.txt)
@@ -469,9 +518,10 @@ LLM_BASE_URL=https://openrouter.ai/api/v1
 LLM_MODEL=anthropic/claude-3.5-sonnet
 SYSTEM_PROMPT_FILE=prompts/system_prompt.txt
 MAX_CONTEXT_MESSAGES=20
+DATABASE_URL=postgresql://bot_user:bot_password@localhost:5432/systech_aidd
 ```
 
-**.env.example** (в git):
+**.env template:**
 ```bash
 BOT_TOKEN=your_telegram_bot_token
 LLM_API_KEY=your_openrouter_api_key
@@ -479,6 +529,7 @@ LLM_BASE_URL=https://openrouter.ai/api/v1
 LLM_MODEL=anthropic/claude-3.5-sonnet
 SYSTEM_PROMPT_FILE=prompts/system_prompt.txt
 MAX_CONTEXT_MESSAGES=20
+DATABASE_URL=postgresql://bot_user:bot_password@localhost:5432/systech_aidd
 ```
 
 ### Загрузка .env
@@ -577,13 +628,14 @@ logging.basicConfig(
 ### Подготовка окружения
 
 1. Установить Python 3.11+
-2. Установить `uv`:
+2. Установить Docker и Docker Compose
+3. Установить `uv`:
    ```bash
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
-3. Клонировать репозиторий
-4. Создать `.env` файл на основе `.env.example`
-5. Заполнить обязательные переменные в `.env`
+4. Клонировать репозиторий
+5. Создать `.env` файл с обязательными переменными
+6. Запустить PostgreSQL через Docker
 
 ### Установка зависимостей
 
@@ -593,7 +645,29 @@ make install
 
 Или напрямую через uv:
 ```bash
-uv sync
+uv sync --extra dev
+```
+
+### Запуск PostgreSQL
+
+```bash
+make db-up
+```
+
+Или напрямую:
+```bash
+docker compose up -d postgres
+```
+
+### Применение миграций
+
+```bash
+make db-migrate
+```
+
+Или напрямую:
+```bash
+yoyo apply --database "$DATABASE_URL" migrations
 ```
 
 ### Запуск бота
@@ -614,47 +688,53 @@ uv run python -m src.main
 ### Makefile команды
 
 ```makefile
-install:
-    uv sync --extra dev
+# Разработка
+install:       uv sync --extra dev
+run:           uv run python -m src.main
 
-run:
-    uv run python -m src.main
+# База данных
+db-up:         docker compose up -d postgres
+db-down:       docker compose down
+db-migrate:    yoyo apply --database "$DATABASE_URL" migrations
+db-rollback:   yoyo rollback --database "$DATABASE_URL" migrations
 
-test:
-    uv run pytest
+# Тестирование
+test:          uv run pytest tests/ -v -m "not integration"
+test-cov:      uv run pytest -m "not integration"
+test-all:      uv run pytest tests/ -v
 
-test-cov:
-    uv run pytest  # с coverage (настроено в pyproject.toml)
+# Качество кода
+format:        uv run ruff format src/ tests/
+lint:          uv run ruff check src/ tests/ && uv run mypy src/ tests/
+check-all:     make format && make lint && make test-cov
 
-format:
-    uv run ruff format src/ tests/
-
-lint:
-    uv run ruff check src/ tests/
-    uv run mypy src/ tests/
-
-check-all:
-    make format && make lint && make test-cov
-
-clean:
-    rm -rf logs/*.log htmlcov/ .coverage
+# Утилиты
+clean:         rm -rf logs/*.log htmlcov/ .coverage
 ```
 
 ### Особенности локального запуска
 
 - Бот работает, пока запущен процесс в терминале
 - При закрытии терминала - бот останавливается
-- При перезапуске - вся история диалогов теряется (in-memory storage)
+- История диалогов сохраняется в PostgreSQL между перезапусками
 - Логи сохраняются в `logs/app.log` и доступны после перезапуска
+- PostgreSQL работает в Docker контейнере
 
-### Без деплоя на серверы
+### Требования для запуска
 
-На этапе MVP деплой не предусмотрен:
-- ❌ Без Docker / docker-compose
+- Python 3.11+
+- Docker и Docker Compose
+- uv package manager
+- PostgreSQL через Docker (автоматически поднимается через `make db-up`)
+
+### Текущий статус деплоя
+
+На текущем этапе деплой на production серверы не предусмотрен:
+- ✅ Docker Compose для локальной разработки
 - ❌ Без systemd service или process manager
 - ❌ Без CI/CD
 - ❌ Без облачных платформ
-- ❌ Только локальный запуск на машине разработчика
+- ✅ Только локальный запуск на машине разработчика
 
 ---
 

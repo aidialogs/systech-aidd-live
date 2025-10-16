@@ -6,6 +6,7 @@ import pytest
 
 from src.command_handler import CommandHandler
 from src.context_manager import ContextManager
+from src.database import DatabaseRepository
 from src.message import Message
 
 
@@ -19,15 +20,26 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "LLM_MODEL",
         "SYSTEM_PROMPT",
         "MAX_CONTEXT_MESSAGES",
+        "DATABASE_URL",
     ]
     for var in env_vars_to_remove:
         monkeypatch.delenv(var, raising=False)
 
 
 @pytest.fixture
-def context_manager() -> ContextManager:
-    """Create a real ContextManager instance for testing."""
-    return ContextManager(max_context_messages=20)
+def mock_db_repository() -> AsyncMock:
+    """Create a mock DatabaseRepository."""
+    repo = AsyncMock(spec=DatabaseRepository)
+    repo.save_message = AsyncMock()
+    repo.get_messages = AsyncMock(return_value=[])
+    repo.delete_messages = AsyncMock()
+    return repo
+
+
+@pytest.fixture
+def context_manager(mock_db_repository: AsyncMock) -> ContextManager:
+    """Create a ContextManager instance with mocked database."""
+    return ContextManager(mock_db_repository, max_context_messages=20)
 
 
 @pytest.fixture
@@ -39,8 +51,9 @@ def mock_llm_client() -> AsyncMock:
 
 
 @pytest.fixture
-def command_handler(context_manager: ContextManager) -> CommandHandler:
-    """Create a CommandHandler instance."""
+def command_handler(mock_db_repository: AsyncMock) -> CommandHandler:
+    """Create a CommandHandler instance with mocked database."""
+    context_manager = ContextManager(mock_db_repository, max_context_messages=20)
     return CommandHandler(context_manager)
 
 

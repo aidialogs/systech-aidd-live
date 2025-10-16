@@ -15,6 +15,7 @@ class Config:
     llm_model: str
     system_prompt: str
     max_context_messages: int
+    database_url: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -25,6 +26,7 @@ class Config:
         llm_api_key = os.getenv("LLM_API_KEY")
         llm_base_url = os.getenv("LLM_BASE_URL")
         llm_model = os.getenv("LLM_MODEL")
+        database_url = os.getenv("DATABASE_URL")
 
         # Validate required fields
         missing = []
@@ -36,6 +38,8 @@ class Config:
             missing.append("LLM_BASE_URL")
         if not llm_model:
             missing.append("LLM_MODEL")
+        if not database_url:
+            missing.append("DATABASE_URL")
 
         if missing:
             raise ConfigError(f"Missing required environment variables: {', '.join(missing)}")
@@ -45,6 +49,7 @@ class Config:
         assert llm_api_key is not None
         assert llm_base_url is not None
         assert llm_model is not None
+        assert database_url is not None
 
         # Try to load system prompt from file first
         system_prompt_file = os.getenv("SYSTEM_PROMPT_FILE")
@@ -73,4 +78,5 @@ class Config:
             llm_model=llm_model,
             system_prompt=system_prompt,
             max_context_messages=max_context_messages,
+            database_url=database_url,
         )

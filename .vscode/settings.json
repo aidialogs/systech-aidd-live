@@ -37,6 +37,16 @@
     },
     "terminal.integrated.env.linux": {
         "UV_PROJECT_ENVIRONMENT": "${workspaceFolder}/.venv"
-    }
+    },
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "systech_aidd",
+            "connectString": "postgresql://bot_user:bot_password@localhost:5432/systech_aidd"
+        }
+    ]
 }
 

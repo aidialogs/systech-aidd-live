@@ -11,9 +11,10 @@ Telegram-бот с искусственным интеллектом, котор
 ## ✨ Возможности
 
 - 🤖 **Интеграция с LLM** - подключение к любому OpenAI-compatible API (OpenRouter, OpenAI, и др.)
-- 💬 **Управление контекстом** - бот помнит историю диалога (in-memory)
+- 💬 **Управление контекстом** - бот помнит историю диалога
+- 💾 **Персистентное хранение** - история сохраняется в PostgreSQL между перезапусками
 - ✂️ **Автоматическая обрезка** - контекст ограничен 20 сообщениями для экономии токенов
-- 📝 **Команды управления** - `/start`, `/help`, `/reset`
+- 📝 **Команды управления** - `/start`, `/help`, `/reset`, `/role`
 - 📊 **Полное логирование** - все операции записываются в файл и консоль
 - ⚡ **Асинхронная архитектура** - быстрая обработка запросов
 - 🧪 **Покрытие тестами** - unit и интеграционные тесты
@@ -26,6 +27,12 @@ Telegram-бот с искусственным интеллектом, котор
 - openai - Python SDK для работы с LLM
 - python-dotenv - загрузка переменных окружения
 - uv - современный менеджер пакетов
+
+**Database:**
+- PostgreSQL 16 - реляционная СУБД
+- psycopg3 - асинхронный драйвер PostgreSQL
+- yoyo-migrations - управление миграциями БД
+- Docker Compose - локальная разработка
 
 **Code Quality:**
 - ruff - быстрый линтер и форматтер
@@ -40,6 +47,7 @@ Telegram-бот с искусственным интеллектом, котор
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) - современный менеджер пакетов Python
+- Docker и Docker Compose - для PostgreSQL
 
 Установка uv:
 ```bash
@@ -49,6 +57,10 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # или через pip
 pip install uv
 ```
+
+Установка Docker:
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) - для macOS/Windows
+- [Docker Engine](https://docs.docker.com/engine/install/) - для Linux
 
 ### 1. Установка зависимостей
 
@@ -65,24 +77,47 @@ uv sync --extra dev
 
 ### 2. Настройка
 
-Создайте файл `.env` на основе `.env.example`:
+Создайте файл `.env` с обязательными переменными:
 
 ```bash
-cp .env.example .env
+BOT_TOKEN=your_telegram_bot_token
+LLM_API_KEY=your_openrouter_api_key
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_MODEL=anthropic/claude-3.5-sonnet
+SYSTEM_PROMPT_FILE=prompts/system_prompt.txt
+MAX_CONTEXT_MESSAGES=20
+DATABASE_URL=postgresql://bot_user:bot_password@localhost:5432/systech_aidd
 ```
 
-Заполните обязательные переменные:
+**Обязательные переменные:**
 - `BOT_TOKEN` - токен Telegram бота (получить через @BotFather)
 - `LLM_API_KEY` - API ключ OpenRouter
 - `LLM_BASE_URL` - URL провайдера LLM
 - `LLM_MODEL` - название модели
+- `DATABASE_URL` - строка подключения к PostgreSQL
 
-Опциональные переменные:
-- `SYSTEM_PROMPT_FILE` - путь к файлу с системным промптом (по умолчанию используется `prompts/system_prompt.txt`)
+**Опциональные переменные:**
+- `SYSTEM_PROMPT_FILE` - путь к файлу с системным промптом (по умолчанию `prompts/system_prompt.txt`)
 - `SYSTEM_PROMPT` - системный промпт (fallback если файл не найден)
 - `MAX_CONTEXT_MESSAGES` - максимальное количество сообщений в контексте (по умолчанию 20)
 
-### 3. Запуск
+### 3. Запуск PostgreSQL
+
+```bash
+make db-up
+```
+
+Это запустит PostgreSQL в Docker контейнере.
+
+### 4. Применение миграций
+
+```bash
+make db-migrate
+```
+
+Это создаст необходимые таблицы в базе данных.
+
+### 5. Запуск бота
 
 ```bash
 make run
@@ -93,9 +128,14 @@ make run
 uv run python -m src.main
 ```
 
-### 4. Остановка
+### 6. Остановка
 
-Нажмите `Ctrl+C` в терминале.
+Нажмите `Ctrl+C` в терминале для остановки бота.
+
+Для остановки PostgreSQL:
+```bash
+make db-down
+```
 
 ## 🔧 Настройка окружения
 
@@ -161,6 +201,12 @@ make test
 - `make install` - установка зависимостей (включая dev-инструменты)
 - `make run` - запуск бота
 
+**База данных:**
+- `make db-up` - запустить PostgreSQL (Docker)
+- `make db-down` - остановить PostgreSQL
+- `make db-migrate` - применить миграции
+- `make db-rollback` - откатить последнюю миграцию
+
 **Тестирование:**
 - `make test` - запуск unit тестов (без integration)
 - `make test-cov` - запуск тестов с измерением coverage (без integration)
@@ -210,7 +256,10 @@ systech-aidd-live/
 │   ├── command_handler.py # Обработка команд (/start, /help, /reset, /role)
 │   ├── message_handler.py # Координация обработки сообщений
 │   ├── llm_client.py      # Работа с LLM API
-│   └── context_manager.py # Управление контекстом
+│   ├── context_manager.py # Управление контекстом
+│   └── database.py        # Работа с PostgreSQL
+├── migrations/            # Yoyo миграции БД
+│   └── 001_initial_schema.sql
 ├── prompts/               # Системные промпты
 │   └── system_prompt.txt  # Промпт AICodingExpert
 ├── tests/                 # Тесты (100% coverage)
@@ -222,12 +271,12 @@ systech-aidd-live/
 │   ├── vision.md          # Техническое видение
 │   ├── roadmap.md         # Роадмап проекта
 │   ├── tasklists/         # Планы разработки по спринтам
-│   │   ├── tasklist-s0.md       # План MVP (спринт 0)
-│   │   └── tasklist_tech_debt-s0.md # План tech debt (спринт 0)
 │   ├── guides/            # Руководства для разработчиков
 │   └── adrs/              # Architecture Decision Records
+│       └── ADR-06.md      # Выбор PostgreSQL + psycopg3 + Yoyo
+├── docker-compose.yml     # Docker Compose для PostgreSQL
+├── yoyo.ini               # Конфигурация миграций
 ├── .env                   # Конфигурация (не в git)
-├── .env.example           # Пример конфигурации
 ├── pyproject.toml         # Зависимости + конфигурация инструментов
 ├── Makefile               # Команды автоматизации
 └── README.md
@@ -243,11 +292,12 @@ systech-aidd-live/
 
 **Реализация:**
 - **Один класс = один файл** - строгое правило для читаемости
-- **Асинхронный код** - async/await везде (aiogram + AsyncOpenAI)
+- **Асинхронный код** - async/await везде (aiogram + psycopg3)
 - **Плоская структура** - все в `src/` без глубокой вложенности
 - **Dependency Injection** - через Protocols для тестируемости
 - **Custom Exceptions** - `ConfigError`, `LLMError` для явной обработки ошибок
-- **In-memory хранение** - контекст в памяти, без БД на этапе MVP
+- **Персистентное хранение** - PostgreSQL для истории диалогов
+- **Прямые SQL запросы** - без ORM для простоты (KISS)
 
 ## 📊 Логирование
 

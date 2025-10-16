@@ -16,6 +16,7 @@ def test_config_from_env_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_MODEL", "test-model")
     monkeypatch.setenv("SYSTEM_PROMPT", "Custom prompt")
     monkeypatch.setenv("MAX_CONTEXT_MESSAGES", "30")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")
 
     config = Config.from_env()
 
@@ -25,6 +26,7 @@ def test_config_from_env_success(monkeypatch: pytest.MonkeyPatch) -> None:
     assert config.llm_model == "test-model"
     assert config.system_prompt == "Custom prompt"
     assert config.max_context_messages == 30
+    assert config.database_url == "postgresql://user:pass@localhost/db"
 
 
 def test_config_from_env_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -33,6 +35,7 @@ def test_config_from_env_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_API_KEY", "test_api_key")
     monkeypatch.setenv("LLM_BASE_URL", "https://test.api.com")
     monkeypatch.setenv("LLM_MODEL", "test-model")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")
 
     config = Config.from_env()
 
@@ -45,6 +48,7 @@ def test_config_missing_bot_token(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_API_KEY", "test_api_key")
     monkeypatch.setenv("LLM_BASE_URL", "https://test.api.com")
     monkeypatch.setenv("LLM_MODEL", "test-model")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")
 
     with pytest.raises(ConfigError) as exc_info:
         Config.from_env()
@@ -64,6 +68,7 @@ def test_config_missing_multiple_vars() -> None:
     assert "LLM_API_KEY" in error_msg
     assert "LLM_BASE_URL" in error_msg
     assert "LLM_MODEL" in error_msg
+    assert "DATABASE_URL" in error_msg
 
 
 def test_config_as_dataclass() -> None:
@@ -75,6 +80,7 @@ def test_config_as_dataclass() -> None:
         llm_model="model",
         system_prompt="prompt",
         max_context_messages=10,
+        database_url="postgresql://user:pass@localhost/db",
     )
 
     assert config.bot_token == "token"
@@ -83,6 +89,7 @@ def test_config_as_dataclass() -> None:
     assert config.llm_model == "model"
     assert config.system_prompt == "prompt"
     assert config.max_context_messages == 10
+    assert config.database_url == "postgresql://user:pass@localhost/db"
 
 
 def test_config_loads_system_prompt_from_file(
@@ -99,6 +106,7 @@ def test_config_loads_system_prompt_from_file(
     monkeypatch.setenv("LLM_BASE_URL", "https://test.api.com")
     monkeypatch.setenv("LLM_MODEL", "test-model")
     monkeypatch.setenv("SYSTEM_PROMPT_FILE", str(prompt_file))
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")
 
     config = Config.from_env()
 
@@ -114,6 +122,7 @@ def test_config_fallback_to_env_var_when_file_not_set(
     monkeypatch.setenv("LLM_BASE_URL", "https://test.api.com")
     monkeypatch.setenv("LLM_MODEL", "test-model")
     monkeypatch.setenv("SYSTEM_PROMPT", "Prompt from env var")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")
     # SYSTEM_PROMPT_FILE not set
 
     config = Config.from_env()
@@ -131,6 +140,7 @@ def test_config_fallback_when_file_not_found(
     monkeypatch.setenv("LLM_MODEL", "test-model")
     monkeypatch.setenv("SYSTEM_PROMPT", "Fallback prompt")
     monkeypatch.setenv("SYSTEM_PROMPT_FILE", "/nonexistent/file.txt")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")
 
     config = Config.from_env()
 
