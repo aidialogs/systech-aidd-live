@@ -84,7 +84,12 @@ frontend/
 Create a `.env.local` file:
 
 ```env
+# Backend API URL
 NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Feature flag: use mock data instead of real API
+# Set to "true" for development without backend
+NEXT_PUBLIC_USE_MOCK_DATA=true
 ```
 
 ## Documentation
@@ -106,7 +111,17 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 - ✅ Type definitions
 - ✅ Base layout and page stub
 
-**Next: Sprint S3** - Dashboard implementation with MockAPI integration
+**Sprint S3: Dashboard Implementation** - ✅ Completed
+
+- ✅ Imported shadcn/ui dashboard-01 block
+- ✅ Created metric cards with trend indicators
+- ✅ Implemented interactive chart with 7d/30d toggle
+- ✅ Integrated API client with mock/real data feature flag
+- ✅ Added loading and error states
+- ✅ Customized layout (hidden sidebar, GitHub button)
+- ✅ Responsive design for all screen sizes
+
+**Next: Sprint S4** - AI Chat interface implementation
 
 ## License
 

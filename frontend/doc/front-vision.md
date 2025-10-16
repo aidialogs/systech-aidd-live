@@ -12,14 +12,21 @@
 ### UI компоненты и стилизация
 
 - **shadcn/ui** - коллекция копируемых компонентов (copy-paste в проект)
+- **shadcn/ui dashboard-01 block** - полноценный dashboard layout с sidebar, header, charts
 - **Radix UI** - примитивы для доступных компонентов (под капотом shadcn/ui)
 - **Tailwind CSS 4.x** - utility-first CSS framework
 - **Lucide React** - иконки (поставляются с shadcn/ui)
+- **@tabler/icons-react** - дополнительные иконки для sidebar навигации
 
 ### Charts и визуализация
 
-- **Recharts** - declarative charts для React
-- Альтернативы (если потребуется): visx, Chart.js
+- **shadcn/ui Chart components** - wrapper компоненты над Recharts
+- **Recharts** - declarative charts для React (используется внутри shadcn/ui charts)
+- Преимущества shadcn charts:
+  - Встроенная темизация (light/dark mode)
+  - Consistent стилизация с остальными компонентами
+  - Готовые tooltip и legend компоненты
+  - Type-safe chart configuration
 
 ### HTTP client
 
