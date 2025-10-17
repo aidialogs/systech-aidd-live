@@ -4,6 +4,11 @@
 #   make install            - установка зависимостей (включая dev-инструменты)
 #   make run                - запуск бота
 #
+# Команды для API сервера:
+#   make api-run            - запуск API сервера (порт 8000)
+#   make api-docs           - показать ссылки на документацию API
+#   make api-test           - тестирование API endpoint (curl)
+#
 # Команды для базы данных:
 #   make db-up              - запуск PostgreSQL через Docker Compose
 #   make db-down            - остановка PostgreSQL
@@ -29,6 +34,7 @@
 #
 .PHONY: install run test test-cov test-all test-integration format lint check-all clean
 .PHONY: db-up db-down db-migrate db-rollback db-revision db-shell db-logs
+.PHONY: api-run api-docs api-test
 
 install:
 	uv sync --extra dev
@@ -59,6 +65,28 @@ check-all: format lint test-cov
 
 clean:
 	rm -rf logs/*.log htmlcov/ .coverage .pytest_cache .mypy_cache .ruff_cache
+
+# API Server commands
+api-run:
+	uv run python -m src.api.server
+
+api-docs:
+	@echo "API Documentation:"
+	@echo "  OpenAPI/Swagger UI: http://localhost:8000/docs"
+	@echo "  ReDoc: http://localhost:8000/redoc"
+	@echo ""
+	@echo "API Endpoints:"
+	@echo "  Root: http://localhost:8000/"
+	@echo "  Stats (7d): http://localhost:8000/api/stats?period=7d"
+	@echo "  Stats (30d): http://localhost:8000/api/stats?period=30d"
+	@echo "  Health: http://localhost:8000/health"
+
+api-test:
+	@echo "Testing API endpoint (7 days)..."
+	@curl -s http://localhost:8000/api/stats?period=7d | jq
+	@echo ""
+	@echo "Testing API endpoint (30 days)..."
+	@curl -s http://localhost:8000/api/stats?period=30d | jq
 
 # Database commands
 db-up:
