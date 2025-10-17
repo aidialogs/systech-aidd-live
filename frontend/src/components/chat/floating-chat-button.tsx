@@ -81,7 +81,7 @@ export function FloatingChatButton() {
     <ExpandableChat size="lg" position="bottom-right" icon={<MessageCircle className="text-red-500" />}>
       <ExpandableChatHeader className="flex-col gap-2">
         <div className="text-center">
-          <h1 className="text-xl font-semibold">Devil AI Assistant 😈</h1>
+          <h1 className="text-xl font-semibold">AI Assistant</h1>
           <p className="text-sm text-muted-foreground">
             {mode === 'normal'
               ? 'Ask me anything about coding'
