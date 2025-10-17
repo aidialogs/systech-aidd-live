@@ -1,6 +1,5 @@
-import type { NextConfig } from 'next';
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
 
   // API proxy to backend (optional, for development)
@@ -15,3 +14,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
