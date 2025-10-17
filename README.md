@@ -200,8 +200,9 @@ make db-logs            # Посмотреть логи PostgreSQL
 
 Для полного понимания проекта создан набор подробных гайдов:
 
-- **[GUIDE-01: Getting Started](doc/guides/01-getting-started.md)** — запустить бота за 15 минут
-- **[GUIDE-02: Архитектура](doc/guides/02-architecture.md)** — понять структуру системы
+- **⚡ [30-Second Onboarding Guide](doc/guides/30sec-onboarding-guide.md)** — запустить проект за 30 секунд (quick start)
+- **[GUIDE-01: Getting Started](doc/guides/01-getting-started.md)** — запустить бота за 20 минут с полными объяснениями
+- **[GUIDE-02: Архитектура](doc/guides/02-architecture.md)** — понять структуру системы (Bot + API + Frontend + DB)
 - **[GUIDE-03: Визуальный обзор](doc/guides/03-visual-overview.md)** — 26 диаграмм по SDLC
 - **[GUIDE-06: Codebase Tour](doc/guides/06-codebase-tour.md)** — детальный обзор всех файлов
 - **[GUIDE-07: Development Workflow](doc/guides/07-development-workflow.md)** — процесс разработки
@@ -209,7 +210,7 @@ make db-logs            # Посмотреть логи PostgreSQL
 
 **➡️ [Полный список гайдов](doc/guides/README.md)**
 
-Рекомендуется пройти гайды последовательно (3-4 часа).
+Рекомендуется пройти гайды последовательно (4 часа) или начать с 30-Second Guide для быстрого старта.
 
 ## 🔧 Настройка окружения
 
