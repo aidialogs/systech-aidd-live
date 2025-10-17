@@ -34,7 +34,7 @@ export function ChatMessages({ messages, isLoading, error, mode }: ChatMessagesP
       {messages.map((message) => (
         <ChatBubble key={message.id} variant={message.role === 'user' ? 'sent' : 'received'}>
           {message.role === 'assistant' && (
-            <ChatBubbleAvatar className="h-8 w-8 shrink-0" fallback="AI" />
+            <ChatBubbleAvatar className="h-8 w-8 shrink-0" fallback="😈" />
           )}
           <div className="flex flex-col gap-1">
             <ChatBubbleMessage
@@ -53,7 +53,7 @@ export function ChatMessages({ messages, isLoading, error, mode }: ChatMessagesP
 
       {isLoading && (
         <ChatBubble variant="received">
-          <ChatBubbleAvatar className="h-8 w-8 shrink-0" fallback="AI" />
+          <ChatBubbleAvatar className="h-8 w-8 shrink-0" fallback="😈" />
           <ChatBubbleMessage isLoading />
         </ChatBubble>
       )}
