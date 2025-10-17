@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Bot } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import {
   ExpandableChat,
   ExpandableChatHeader,
@@ -78,10 +78,10 @@ export function FloatingChatButton() {
   };
 
   return (
-    <ExpandableChat size="lg" position="bottom-right" icon={<Bot />}>
+    <ExpandableChat size="lg" position="bottom-right" icon={<Flame className="text-red-500" />}>
       <ExpandableChatHeader className="flex-col gap-2">
         <div className="text-center">
-          <h1 className="text-xl font-semibold">AI Assistant ✨</h1>
+          <h1 className="text-xl font-semibold">Devil AI Assistant 😈</h1>
           <p className="text-sm text-muted-foreground">
             {mode === 'normal'
               ? 'Ask me anything about coding'

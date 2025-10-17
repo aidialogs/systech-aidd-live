@@ -104,7 +104,7 @@ export function ChatInterface({
             >
               <ChatBubbleAvatar
                 className="h-8 w-8 shrink-0"
-                fallback={message.role === 'user' ? 'U' : 'AI'}
+                fallback={message.role === 'user' ? 'U' : '😈'}
               />
               <div className="flex flex-col gap-1">
                 <ChatBubbleMessage
@@ -123,7 +123,7 @@ export function ChatInterface({
 
           {isLoading && (
             <ChatBubble variant="received">
-              <ChatBubbleAvatar className="h-8 w-8 shrink-0" fallback="AI" />
+              <ChatBubbleAvatar className="h-8 w-8 shrink-0" fallback="😈" />
               <ChatBubbleMessage isLoading />
             </ChatBubble>
           )}
