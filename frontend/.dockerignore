@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+# pnpm-lock.yaml нужен для frozen-lockfile install
+
+# Next.js
+.next/
+out/
+
+# Testing and Coverage
+coverage/
+.nyc_output/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Documentation
+*.md
+!README.md
+
+# DevOps
+Dockerfile*
+.dockerignore
+

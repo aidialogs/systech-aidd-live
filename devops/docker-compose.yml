@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:16-alpine
+    container_name: systech-aidd-postgres
+    environment:
+      POSTGRES_USER: systech_user
+      POSTGRES_PASSWORD: systech_password
+      POSTGRES_DB: systech_aidd
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U systech_user -d systech_aidd"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - systech-network
+
+  # Telegram Bot
+  bot:
+    build:
+      context: ..
+      dockerfile: devops/Dockerfile.bot
+    container_name: systech-aidd-bot
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://systech_user:systech_password@postgres:5432/systech_aidd
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - systech-network
+    volumes:
+      - ../logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep '[p]ython -m src.main' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # FastAPI сервис
+  api:
+    build:
+      context: ..
+      dockerfile: devops/Dockerfile.api
+    container_name: systech-aidd-api
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://systech_user:systech_password@postgres:5432/systech_aidd
+      UVICORN_WORKERS: 2
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - systech-network
+    volumes:
+      - ../logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../devops/Dockerfile.frontend
+    container_name: systech-aidd-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - systech-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Общая сеть для межсервисного взаимодействия
+networks:
+  systech-network:
+    driver: bridge
+
+# Volumes для персистентности данных
+volumes:
+  postgres_data:
+    driver: local
+

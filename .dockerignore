@@ -1,0 +1,52 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Testing and Coverage
+htmlcov/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Frontend (excluded from Python services build)
+frontend/
+node_modules/
+
+# Documentation (not needed in container)
+doc/
+*.md
+!README.md
+
+# DevOps files (not needed in runtime)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+

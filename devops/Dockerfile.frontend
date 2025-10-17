@@ -1,0 +1,68 @@
+# Stage 1: Dependencies - установка зависимостей
+FROM node:20-alpine AS deps
+
+# Установка pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Настройка рабочей директории
+WORKDIR /app
+
+# Копирование файлов с описанием зависимостей
+COPY package.json pnpm-lock.yaml* ./
+
+# Установка зависимостей
+RUN pnpm install --frozen-lockfile
+
+# Stage 2: Builder - сборка приложения
+FROM node:20-alpine AS builder
+
+# Установка pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Копирование node_modules из deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Копирование исходного кода
+COPY . .
+
+# Настройка переменных окружения для сборки
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Сборка Next.js приложения с standalone output
+RUN pnpm build
+
+# Stage 3: Runner - минимальный production образ
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Создание non-root пользователя для безопасности
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Копирование необходимых файлов из builder
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Переключение на non-root пользователя
+USER nextjs
+
+# Настройка переменных окружения
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Expose порт
+EXPOSE 3000
+
+# Health check: проверка доступности приложения
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000', (r) => {if(r.statusCode !== 200) process.exit(1)})" || exit 1
+
+# Точка входа: запуск Next.js standalone сервера
+CMD ["node", "server.js"]
+

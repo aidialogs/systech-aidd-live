@@ -129,6 +129,25 @@
 
 ---
 
+### [GUIDE-09: Docker Deployment](09-docker-deployment.md)
+**Цель**: Научиться запускать проект через Docker контейнеры для локальной разработки и production.
+
+**Охват**:
+- Быстрый старт с Docker (docker-compose)
+- Структура Docker-инфраструктуры (devops/)
+- Production режим (isolated containers, health checks)
+- Development режим (hot reload, volume mounts)
+- Управление контейнерами (logs, exec, restart)
+- Troubleshooting (порты, permissions, volumes)
+- Best practices (security, optimization, monitoring)
+- Миграции БД через Docker
+- Remote debugging
+- Адаптация для production (registry, CI/CD, secrets)
+
+**Для кого**: DevOps-инженеры, разработчики, желающие использовать Docker для разработки или деплоя.
+
+---
+
 ## 🗺️ Рекомендуемый путь обучения
 
 ```mermaid
@@ -164,8 +183,9 @@ graph TD
 | GUIDE-06 | 45 мин | ⭐⭐⭐⭐☆ | Must have |
 | GUIDE-07 | 60 мин | ⭐⭐⭐⭐☆ | Must have |
 | GUIDE-08 | 45 мин | ⭐⭐⭐⭐☆ | Must have |
+| GUIDE-09 | 40 мин | ⭐⭐⭐☆☆ | Nice to have |
 
-**Итого**: ~3.5 часа на полное понимание проекта (включая визуальный обзор).
+**Итого**: ~4 часа на полное понимание проекта (включая визуальный обзор и Docker).
 
 ---
 

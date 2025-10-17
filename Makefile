@@ -6,6 +6,7 @@
 .PHONY: db-up db-down db-migrate db-rollback db-revision db-shell db-logs
 .PHONY: api-run api-docs api-test
 .PHONY: frontend-install frontend-dev frontend-build frontend-start frontend-lint frontend-format frontend-type-check frontend-check-all
+.PHONY: docker-build docker-up docker-down docker-logs docker-ps docker-clean docker-dev docker-lint docker-scan docker-restart
 
 # Default target
 .DEFAULT_GOAL := help
@@ -56,6 +57,18 @@ help: ## Показать это сообщение с помощью
 	@echo "  make frontend-format    - форматирование Prettier"
 	@echo "  make frontend-type-check - проверка TypeScript"
 	@echo "  make frontend-check-all - полная проверка frontend"
+	@echo ""
+	@echo "Docker:"
+	@echo "  make docker-build       - сборка всех Docker образов"
+	@echo "  make docker-up          - запуск в production режиме"
+	@echo "  make docker-dev         - запуск в development режиме"
+	@echo "  make docker-down        - остановка всех сервисов"
+	@echo "  make docker-logs        - просмотр логов"
+	@echo "  make docker-ps          - статус контейнеров"
+	@echo "  make docker-restart     - перезапуск сервисов"
+	@echo "  make docker-clean       - удаление контейнеров и volumes"
+	@echo "  make docker-lint        - проверка Dockerfile (Hadolint)"
+	@echo "  make docker-scan        - сканирование безопасности (Trivy)"
 	@echo ""
 	@echo "Утилиты:"
 	@echo "  make clean              - очистка временных файлов"
@@ -158,3 +171,52 @@ frontend-type-check:
 	cd frontend && $(WITH_NVM) pnpm type-check
 
 frontend-check-all: frontend-lint frontend-type-check
+
+# Docker commands
+DOCKER_COMPOSE := docker compose -f devops/docker-compose.yml
+DOCKER_COMPOSE_DEV := docker compose -f devops/docker-compose.yml -f devops/docker-compose.dev.yml
+
+docker-build:
+	$(DOCKER_COMPOSE) build
+
+docker-up:
+	$(DOCKER_COMPOSE) up -d
+
+docker-dev:
+	$(DOCKER_COMPOSE_DEV) up
+
+docker-down:
+	$(DOCKER_COMPOSE) down
+
+docker-logs:
+	$(DOCKER_COMPOSE) logs -f
+
+docker-ps:
+	$(DOCKER_COMPOSE) ps
+
+docker-restart:
+	$(DOCKER_COMPOSE) restart
+
+docker-clean:
+	$(DOCKER_COMPOSE) down -v --rmi local
+	@echo "Docker очищен: контейнеры, volumes и локальные образы удалены"
+
+docker-lint:
+	@echo "Проверка Dockerfile с помощью Hadolint..."
+	@docker run --rm -i hadolint/hadolint < devops/Dockerfile.bot || true
+	@docker run --rm -i hadolint/hadolint < devops/Dockerfile.api || true
+	@docker run --rm -i hadolint/hadolint < devops/Dockerfile.frontend || true
+	@echo "Hadolint проверка завершена"
+
+docker-scan:
+	@echo "Сканирование образов с помощью Trivy..."
+	@echo "Сканирование systech-aidd-bot..."
+	@docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image systech-aidd-live-bot:latest || true
+	@echo ""
+	@echo "Сканирование systech-aidd-api..."
+	@docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image systech-aidd-live-api:latest || true
+	@echo ""
+	@echo "Сканирование systech-aidd-frontend..."
+	@docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image systech-aidd-live-frontend:latest || true
+	@echo ""
+	@echo "Trivy сканирование завершено"

@@ -179,6 +179,149 @@ make db-logs            # Посмотреть логи PostgreSQL
 
 Нажмите `Ctrl+C` в терминале.
 
+## 🐳 Docker Deployment
+
+Проект полностью контейнеризован и может быть запущен через Docker для локальной разработки или production deployment.
+
+### Преимущества Docker-запуска
+
+✅ **Изолированное окружение** - никаких конфликтов зависимостей  
+✅ **Быстрый старт** - всё работает из коробки  
+✅ **Production-ready** - те же образы для dev и prod  
+✅ **Multi-service** - Bot, API, Frontend, PostgreSQL в одной команде  
+
+### Требования
+
+- Docker 20.10+ с Docker Compose v2
+- 4+ GB RAM, ~2 GB свободного места
+- Порты 3000, 5432, 8000 свободны
+
+### Быстрый старт с Docker
+
+```bash
+# 1. Создать .env файл
+cp .env.example .env
+# Заполнить BOT_TOKEN, LLM_API_KEY и другие переменные
+
+# 2. Собрать образы
+make docker-build
+
+# 3. Запустить все сервисы
+make docker-up
+
+# 4. Проверить статус
+make docker-ps
+
+# 5. Просмотр логов
+make docker-logs
+```
+
+### Доступ к сервисам
+
+После запуска доступны:
+- **API:** http://localhost:8000 (Health: http://localhost:8000/health)
+- **API Docs:** http://localhost:8000/docs (Swagger UI)
+- **Frontend:** http://localhost:3000
+- **PostgreSQL:** localhost:5432
+
+### Docker команды
+
+```bash
+make docker-build       # Сборка всех образов
+make docker-up          # Запуск в production режиме
+make docker-dev         # Запуск в dev режиме (hot reload)
+make docker-down        # Остановка всех сервисов
+make docker-logs        # Просмотр логов
+make docker-ps          # Статус контейнеров
+make docker-restart     # Перезапуск сервисов
+make docker-clean       # Удаление контейнеров и volumes
+make docker-lint        # Проверка Dockerfile (Hadolint)
+make docker-scan        # Сканирование безопасности (Trivy)
+```
+
+### Development режим с hot reload
+
+```bash
+# Запустить в dev режиме с volume mounts
+make docker-dev
+
+# Изменения в коде автоматически применяются:
+# - API (FastAPI): uvicorn с --reload
+# - Frontend (Next.js): dev server с HMR
+# - Bot: требует ручного рестарта контейнера
+```
+
+### Структура Docker-инфраструктуры
+
+```
+devops/
+├── Dockerfile.bot              # Bot образ (Python + UV)
+├── Dockerfile.api              # API образ (FastAPI + Uvicorn)
+├── Dockerfile.frontend         # Frontend образ (Next.js standalone)
+├── docker-compose.yml          # Production оркестрация
+├── docker-compose.dev.yml      # Development overrides
+└── .hadolint.yaml              # Hadolint конфигурация
+```
+
+**Особенности образов:**
+- Multi-stage builds для минимального размера
+- Non-root пользователи для безопасности
+- Health checks для всех сервисов
+- UV для быстрой установки Python-зависимостей (10-20x быстрее pip)
+- Next.js standalone output (~150 MB вместо ~800 MB)
+
+### Применение миграций БД
+
+```bash
+# Внутри контейнера API
+docker compose -f devops/docker-compose.yml exec api alembic upgrade head
+
+# Откат миграции
+docker compose -f devops/docker-compose.yml exec api alembic downgrade -1
+```
+
+### Troubleshooting
+
+**Проблема:** Порт уже занят
+```bash
+# Найти процесс
+lsof -i :8000
+# Изменить порт в devops/docker-compose.yml
+```
+
+**Проблема:** Контейнер не запускается
+```bash
+# Смотрим логи
+docker compose -f devops/docker-compose.yml logs api
+# Проверяем переменные окружения
+docker compose -f devops/docker-compose.yml config
+```
+
+**Проблема:** Медленная сборка
+```bash
+# Включить BuildKit
+export DOCKER_BUILDKIT=1
+# Очистить build cache
+docker builder prune
+```
+
+### Подробная документация
+
+- **[GUIDE-09: Docker Deployment](doc/guides/09-docker-deployment.md)** - полное руководство (troubleshooting, best practices)
+- **[ADR-08: Docker Best Practices](doc/adrs/ADR-08.md)** - архитектурные решения и обоснования
+- **[DevOps Roadmap](devops/doc/devops-roadmap.md)** - план развития DevOps инфраструктуры
+
+### Production deployment
+
+Для production использования:
+1. Собрать и запушить образы в container registry (Docker Hub, ghcr.io, ECR)
+2. Использовать конкретные версии вместо `latest` тегов
+3. Настроить secrets через orchestrator (K8s secrets, Docker secrets)
+4. Включить monitoring и logging (Prometheus, Grafana, ELK)
+5. Настроить CI/CD для автоматической сборки и деплоя
+
+Подробнее см. секцию "Адаптация для промышленного использования" в [ADR-08](doc/adrs/ADR-08.md).
+
 ## 📚 Руководства для разработчиков
 
 Для полного понимания проекта создан набор подробных гайдов:
@@ -189,6 +332,7 @@ make db-logs            # Посмотреть логи PostgreSQL
 - **[GUIDE-06: Codebase Tour](doc/guides/06-codebase-tour.md)** — детальный обзор всех файлов
 - **[GUIDE-07: Development Workflow](doc/guides/07-development-workflow.md)** — процесс разработки
 - **[GUIDE-08: Testing](doc/guides/08-testing.md)** — стратегия тестирования
+- **[GUIDE-09: Docker Deployment](doc/guides/09-docker-deployment.md)** — Docker контейнеризация и деплой
 
 **➡️ [Полный список гайдов](doc/guides/README.md)**
 

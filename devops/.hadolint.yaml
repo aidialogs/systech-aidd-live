@@ -1,0 +1,29 @@
+# Конфигурация Hadolint для проверки Dockerfile
+# https://github.com/hadolint/hadolint
+
+# Игнорируемые правила
+ignored:
+  # DL3008: Pin versions in apt-get install (мы используем --no-install-recommends и чистим кэш)
+  - DL3008
+  # DL3009: Delete the apt-get lists after installing (мы это делаем)
+  # - DL3009
+  # DL3018: Pin versions in apk add (Alpine packages меняются редко)
+  - DL3018
+
+# Trusted registries для base images
+trustedRegistries:
+  - docker.io
+  - ghcr.io
+  - gcr.io
+
+# Настройки проверки labels
+label-schema:
+  author: maintainer
+  version: com.example.version
+
+# Строгость проверки
+failure-threshold: warning
+
+# Формат вывода: tty, json, checkstyle, codeclimate, gitlab_codeclimate, codacy
+# format: tty
+
