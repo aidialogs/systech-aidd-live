@@ -1,40 +1,65 @@
 # Makefile для systech-aidd-live
 #
-# Команды для разработки:
-#   make install            - установка зависимостей (включая dev-инструменты)
-#   make run                - запуск бота
+# Используйте 'make help' для просмотра всех доступных команд
 #
-# Команды для API сервера:
-#   make api-run            - запуск API сервера (порт 8000)
-#   make api-docs           - показать ссылки на документацию API
-#   make api-test           - тестирование API endpoint (curl)
-#
-# Команды для базы данных:
-#   make db-up              - запуск PostgreSQL через Docker Compose
-#   make db-down            - остановка PostgreSQL
-#   make db-migrate         - применение миграций (alembic upgrade head)
-#   make db-rollback        - откат последней миграции
-#   make db-revision        - создание новой миграции (указать message="название")
-#   make db-shell           - подключение к PostgreSQL через psql
-#   make db-logs            - просмотр логов PostgreSQL
-#
-# Команды для тестирования:
-#   make test               - запуск unit тестов (без integration)
-#   make test-cov           - запуск тестов с coverage (без integration)
-#   make test-integration   - запуск только integration тестов (реальные API вызовы)
-#   make test-all           - запуск всех тестов (unit + integration)
-#
-# Команды для качества кода:
-#   make format             - автоформатирование кода (ruff format)
-#   make lint               - проверка кода (ruff check + mypy)
-#   make check-all          - полная проверка (format + lint + test-cov)
-#
-# Утилиты:
-#   make clean              - очистка логов и временных файлов
-#
-.PHONY: install run test test-cov test-all test-integration format lint check-all clean
+.PHONY: help install run test test-cov test-all test-integration format lint check-all clean
 .PHONY: db-up db-down db-migrate db-rollback db-revision db-shell db-logs
 .PHONY: api-run api-docs api-test
+.PHONY: frontend-install frontend-dev frontend-build frontend-start frontend-lint frontend-format frontend-type-check frontend-check-all
+
+# Default target
+.DEFAULT_GOAL := help
+
+# NVM setup для frontend команд
+NVM_DIR := $(HOME)/.nvm
+NVM_SH := $(NVM_DIR)/nvm.sh
+WITH_NVM := source $(NVM_SH) && nvm use default &&
+
+help: ## Показать это сообщение с помощью
+	@echo "Доступные команды:"
+	@echo ""
+	@echo "Backend:"
+	@echo "  make install            - установка зависимостей (uv sync)"
+	@echo "  make run                - запуск Telegram бота"
+	@echo ""
+	@echo "API сервер:"
+	@echo "  make api-run            - запуск FastAPI сервера (порт 8000)"
+	@echo "  make api-docs           - показать ссылки на документацию API"
+	@echo "  make api-test           - тестирование API endpoints"
+	@echo ""
+	@echo "База данных:"
+	@echo "  make db-up              - запуск PostgreSQL (Docker)"
+	@echo "  make db-down            - остановка PostgreSQL"
+	@echo "  make db-migrate         - применение миграций"
+	@echo "  make db-rollback        - откат последней миграции"
+	@echo "  make db-revision        - создать миграцию (message=\"название\")"
+	@echo "  make db-shell           - psql консоль"
+	@echo "  make db-logs            - логи PostgreSQL"
+	@echo ""
+	@echo "Тестирование:"
+	@echo "  make test               - unit тесты"
+	@echo "  make test-cov           - тесты с coverage"
+	@echo "  make test-integration   - integration тесты"
+	@echo "  make test-all           - все тесты"
+	@echo ""
+	@echo "Качество кода (Backend):"
+	@echo "  make format             - форматирование (ruff)"
+	@echo "  make lint               - проверка кода (ruff + mypy)"
+	@echo "  make check-all          - полная проверка"
+	@echo ""
+	@echo "Frontend:"
+	@echo "  make frontend-install   - установка зависимостей (pnpm)"
+	@echo "  make frontend-dev       - dev-сервер (порт 3000)"
+	@echo "  make frontend-build     - production сборка"
+	@echo "  make frontend-start     - production сервер"
+	@echo "  make frontend-lint      - проверка ESLint"
+	@echo "  make frontend-format    - форматирование Prettier"
+	@echo "  make frontend-type-check - проверка TypeScript"
+	@echo "  make frontend-check-all - полная проверка frontend"
+	@echo ""
+	@echo "Утилиты:"
+	@echo "  make clean              - очистка временных файлов"
+	@echo ""
 
 install:
 	uv sync --extra dev
@@ -109,3 +134,27 @@ db-shell:
 
 db-logs:
 	docker compose logs -f postgres
+
+# Frontend commands (with NVM)
+frontend-install:
+	cd frontend && $(WITH_NVM) pnpm install
+
+frontend-dev:
+	cd frontend && $(WITH_NVM) pnpm dev
+
+frontend-build:
+	cd frontend && $(WITH_NVM) pnpm build
+
+frontend-start:
+	cd frontend && $(WITH_NVM) pnpm start
+
+frontend-lint:
+	cd frontend && $(WITH_NVM) pnpm lint
+
+frontend-format:
+	cd frontend && $(WITH_NVM) pnpm format
+
+frontend-type-check:
+	cd frontend && $(WITH_NVM) pnpm type-check
+
+frontend-check-all: frontend-lint frontend-type-check

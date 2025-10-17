@@ -1,141 +1,207 @@
-# Frontend Development
+# Frontend - systech-aidd-live
 
-Этот каталог содержит документацию и ресурсы для разработки пользовательского интерфейса (frontend) проекта systech-aidd-live.
+Пользовательский интерфейс для проекта systech-aidd-live, включающий дашборд статистики и веб-чат для администрирования.
 
-## 📋 Документация
+## Технологический стек
 
-- **[Frontend Roadmap](doc/frontend-roadmap.md)** - дорожная карта развития frontend
-- **[Dashboard Requirements](doc/dashboard-requirements.md)** - функциональные требования к дашборду
-- **[Sprint F1 Summary](doc/sprint-f1-summary.md)** - результаты первого спринта
+- **Framework:** Next.js 15+
+- **Язык:** TypeScript 5+
+- **UI Library:** shadcn/ui
+- **Styling:** Tailwind CSS 4+
+- **Пакетный менеджер:** pnpm
 
-## 🚀 Mock API для разработки
+## Быстрый старт
 
-Mock API предоставляет фиксированные данные для разработки frontend без необходимости реальной базы данных.
-
-### Быстрый старт
-
-```bash
-# Установка зависимостей
-make install
-
-# Запуск API сервера
-make api-run
-```
-
-API будет доступен на `http://localhost:8000`
-
-### Документация API
-
-После запуска сервера откройте в браузере:
-- **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
-
-### Endpoints
+### Установка зависимостей
 
 ```bash
-# Получить статистику за 7 дней
-curl http://localhost:8000/api/stats?period=7d
-
-# Получить статистику за 30 дней
-curl http://localhost:8000/api/stats?period=30d
-
-# Health check
-curl http://localhost:8000/health
+make frontend-install
 ```
 
-### Быстрое тестирование
+Или напрямую:
 
 ```bash
-# Показать информацию об API
-make api-docs
-
-# Протестировать все endpoints
-make api-test
+cd frontend && pnpm install
 ```
 
-## 📊 Структура данных API
+### Запуск dev-сервера
 
-### Метрики
-
-API возвращает 4 основные метрики с трендами:
-
-- **total_users** - общее количество пользователей
-- **total_chats** - количество активных диалогов
-- **total_messages** - общее количество сообщений
-- **avg_message_length** - средняя длина сообщения
-
-Каждая метрика содержит:
-- `value` - текущее значение
-- `trend` - процент изменения (может быть положительным или отрицательным)
-
-### Timeline
-
-Массив точек данных для графика количества сообщений по дням:
-- `date` - дата в формате ISO (YYYY-MM-DD)
-- `messages` - количество сообщений за этот день
-
-### Пример ответа
-
-```json
-{
-  "metrics": {
-    "total_users": {"value": 1250, "trend": 12.5},
-    "total_chats": {"value": 1089, "trend": 8.3},
-    "total_messages": {"value": 45678, "trend": 15.7},
-    "avg_message_length": {"value": 142, "trend": 3.2}
-  },
-  "timeline": [
-    {"date": "2025-10-11", "messages": 6234},
-    {"date": "2025-10-12", "messages": 6521}
-  ]
-}
+```bash
+make frontend-dev
 ```
 
-## 🎯 Roadmap
+Или напрямую:
 
-| Спринт | Описание | Статус |
-|--------|----------|--------|
-| F1 | Требования к дашборду и Mock API | ✅ Завершен |
-| F2 | Каркас frontend проекта | 📋 Планируется |
-| F3 | Реализация dashboard | 📋 Планируется |
-| F4 | Реализация ИИ-чата | 📋 Планируется |
-| F5 | Переход на реальный API | 📋 Планируется |
+```bash
+cd frontend && pnpm dev
+```
 
-Подробности см. в [Frontend Roadmap](doc/frontend-roadmap.md)
+Приложение будет доступно на **http://localhost:3000**
 
-## 🛠 Технологии
+### Проверка качества кода
 
-### Backend (Mock API)
-- **FastAPI** - современный веб-фреймворк для Python
-- **Uvicorn** - ASGI сервер
-- **Python 3.11+** - язык разработки
+```bash
+make frontend-check-all
+```
 
-### Планируемый Frontend Stack
-Выбор технологий будет выполнен в спринте F2
+Это выполнит ESLint проверку и TypeScript type check.
 
-## 📚 Дополнительные ресурсы
+## Команды разработки
 
-- [Референс дашборда](https://ui.shadcn.com/blocks#dashboard-01) - UI референс для дашборда
-- [Project Vision](../doc/vision.md) - общее техническое видение проекта
-- [Backend Roadmap](../doc/roadmap.md) - дорожная карта backend разработки
+### Просмотр всех команд
 
-## 🤝 Разработка
+```bash
+make help
+```
 
-### Структура каталога
+Или просто:
+
+```bash
+make
+```
+
+### Основные команды
+
+- `make frontend-install` - установка зависимостей (pnpm)
+- `make frontend-dev` - запуск dev-сервера (порт 3000)
+- `make frontend-build` - production сборка
+- `make frontend-start` - запуск production сервера
+
+### Проверка качества
+
+- `make frontend-lint` - проверка ESLint
+- `make frontend-format` - форматирование кода через Prettier
+- `make frontend-type-check` - проверка TypeScript типов
+- `make frontend-check-all` - полная проверка (lint + types)
+
+> **Примечание:** Все frontend команды автоматически используют правильную версию Node.js через nvm.
+
+### Прямые команды (через pnpm)
+
+```bash
+cd frontend
+
+pnpm dev          # Запуск dev-сервера
+pnpm build        # Production сборка
+pnpm start        # Запуск production сервера
+pnpm lint         # ESLint проверка
+pnpm format       # Prettier форматирование
+pnpm type-check   # TypeScript проверка
+```
+
+## Структура проекта
 
 ```
 frontend/
-├── doc/                           # Документация
-│   ├── frontend-roadmap.md       # Roadmap frontend
-│   ├── dashboard-requirements.md # Требования к дашборду
-│   └── sprint-f1-summary.md      # Итоги спринта F1
-└── README.md                     # Этот файл
+├── app/                    # Next.js App Router
+│   ├── layout.tsx         # Корневой layout
+│   ├── page.tsx           # Главная страница (dashboard)
+│   └── globals.css        # Глобальные стили
+├── components/
+│   ├── ui/                # shadcn/ui компоненты (button, card, etc.)
+│   ├── dashboard/         # Компоненты дашборда (будущее)
+│   └── chat/              # Компоненты чата (будущее)
+├── lib/
+│   ├── utils.ts           # Утилиты (cn helper)
+│   └── api.ts             # API client для backend
+├── types/
+│   └── api.ts             # TypeScript типы для API
+├── doc/                   # Документация
+│   ├── frontend-vision.md
+│   ├── frontend-roadmap.md
+│   ├── dashboard-requirements.md
+│   └── sprint-f1-summary.md
+├── package.json
+├── tsconfig.json
+├── tailwind.config.ts
+├── components.json        # Конфигурация shadcn/ui
+└── eslint.config.mjs
 ```
 
-### Следующие шаги
+## Интеграция с Backend
 
-После завершения спринта F2 здесь появится:
-- Структура frontend проекта
-- Конфигурация инструментов разработки
-- Команды для сборки и разработки frontend
+Frontend взаимодействует с FastAPI backend через REST API.
 
+### API Endpoints
+
+- `GET /api/stats?period={7d|30d}` - получение статистики
+- `GET /health` - проверка здоровья API
+
+### Переменные окружения
+
+Создайте файл `.env.local` в директории `frontend/`:
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### Запуск backend API
+
+В отдельном терминале:
+
+```bash
+make api-run
+```
+
+Backend API будет доступен на **http://localhost:8000**
+
+Документация API: **http://localhost:8000/docs**
+
+## Разработка
+
+### Добавление shadcn/ui компонентов
+
+```bash
+cd frontend
+pnpm dlx shadcn@latest add [component-name]
+```
+
+Например:
+
+```bash
+pnpm dlx shadcn@latest add button
+pnpm dlx shadcn@latest add card
+pnpm dlx shadcn@latest add input
+```
+
+### Форматирование кода
+
+```bash
+make frontend-format
+```
+
+Это отформатирует все файлы согласно настройкам Prettier.
+
+### Проверка перед коммитом
+
+```bash
+make frontend-check-all
+```
+
+Убедитесь, что все проверки проходят перед коммитом изменений.
+
+## Roadmap
+
+См. [frontend-roadmap.md](doc/frontend-roadmap.md) для детального плана развития.
+
+### Спринты
+
+- **F1:** ✅ Требования к дашборду и Mock API
+- **F2:** ✅ Каркас frontend проекта (текущий)
+- **F3:** 📋 Реализация dashboard
+- **F4:** 📋 Реализация ИИ-чата
+- **F5:** 📋 Переход на реальный API
+
+## Документация
+
+- [Техническое видение](doc/frontend-vision.md) - архитектура и принципы разработки
+- [Roadmap](doc/frontend-roadmap.md) - план развития frontend
+- [Dashboard Requirements](doc/dashboard-requirements.md) - требования к дашборду
+- [ADR-07](../doc/adrs/ADR-07.md) - решение о выборе технологического стека
+
+## Ресурсы
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [shadcn/ui Documentation](https://ui.shadcn.com)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs)
