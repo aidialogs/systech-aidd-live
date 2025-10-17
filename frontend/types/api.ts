@@ -27,3 +27,26 @@ export interface StatsResponse {
 export interface HealthResponse {
   status: "healthy" | "unhealthy";
 }
+
+// Chat types
+export type ChatMode = "normal" | "admin";
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  created_at: string;
+  sql_query?: string; // For admin mode debug
+}
+
+export interface ChatResponse {
+  message: string;
+  sql_query?: string; // For admin mode
+  session_id: string;
+}
+
+export interface SendMessageRequest {
+  session_id: string;
+  message: string;
+  mode: ChatMode;
+}

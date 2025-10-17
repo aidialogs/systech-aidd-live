@@ -12,6 +12,23 @@ engine = None
 async_session_maker = None
 
 
+def get_session_factory(database_url: str, echo: bool = False) -> async_sessionmaker[AsyncSession]:
+    """Create and return a session factory.
+    
+    Args:
+        database_url: Database connection URL
+        echo: Whether to echo SQL statements
+        
+    Returns:
+        Async session maker factory
+    """
+    logger.info(f"Creating database session factory: {database_url.split('@')[-1]}")
+    engine = create_async_engine(database_url, echo=echo, pool_pre_ping=True)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    logger.info("Session factory created successfully")
+    return session_factory
+
+
 def init_database(database_url: str, echo: bool = False) -> None:
     """Initialize database engine and session maker."""
     global engine, async_session_maker

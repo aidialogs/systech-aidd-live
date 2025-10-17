@@ -6,6 +6,7 @@ import { DashboardHeader } from "@/components/dashboard/header";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { PeriodSelector } from "@/components/dashboard/period-selector";
 import { TimelineChart } from "@/components/dashboard/timeline-chart";
+import { FloatingChatButton } from "@/components/chat/floating-chat-button";
 import { fetchStats } from "@/lib/api";
 import type { Period, StatsResponse } from "@/types/api";
 
@@ -94,6 +95,9 @@ export default function DashboardPage() {
           </>
         )}
       </main>
+
+      {/* Floating Chat Button */}
+      <FloatingChatButton />
     </div>
   );
 }
