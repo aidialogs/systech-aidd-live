@@ -10,21 +10,32 @@ Telegram-бот с искусственным интеллектом, котор
 
 ## ✨ Возможности
 
+**Telegram Bot:**
 - 🤖 **Интеграция с LLM** - подключение к любому OpenAI-compatible API (OpenRouter, OpenAI, и др.)
 - 💬 **Управление контекстом** - бот помнит историю диалога с персистентным хранением
 - 💾 **База данных** - PostgreSQL для надежного хранения истории диалогов
 - ✂️ **Автоматическая обрезка** - контекст ограничен 20 сообщениями для экономии токенов
 - 📝 **Команды управления** - `/start`, `/help`, `/reset`, `/role`
 - 🗑️ **Soft delete** - логическое удаление данных для возможной аналитики
+
+**Statistics API:**
+- 📊 **REST API** - FastAPI для получения статистики диалогов
+- 📈 **Дашборд метрик** - статистика по сообщениям, пользователям, активности
+- ⏱️ **Временные периоды** - статистика за день/неделю/месяц или за всё время
+- 📚 **Автодокументация** - Swagger UI и ReDoc из коробки
+- 🔄 **Protocol pattern** - легкая замена Mock → Real реализации
+
+**Общее:**
 - 📊 **Полное логирование** - все операции записываются в файл и консоль
 - ⚡ **Асинхронная архитектура** - быстрая обработка запросов
-- 🧪 **Покрытие тестами** - unit и интеграционные тесты (81%+ coverage)
+- 🧪 **Покрытие тестами** - unit и интеграционные тесты
 
 ## Технологии
 
 **Core:**
 - Python 3.11+
 - aiogram 3.x - асинхронная библиотека для Telegram Bot API
+- FastAPI - современный async web framework для REST API
 - openai - Python SDK для работы с LLM
 - python-dotenv - загрузка переменных окружения
 - uv - современный менеджер пакетов
@@ -35,12 +46,18 @@ Telegram-бот с искусственным интеллектом, котор
 - asyncpg - высокопроизводительный async драйвер для PostgreSQL
 - Alembic - управление миграциями базы данных
 
+**API & Web:**
+- FastAPI - REST API с автодокументацией
+- Uvicorn - ASGI сервер для FastAPI
+- Pydantic - валидация данных и схемы API
+
 **Code Quality:**
 - ruff - быстрый линтер и форматтер
 - mypy - статическая проверка типов (strict mode)
 - pytest - фреймворк для тестирования
 - pytest-cov - измерение покрытия кода тестами
 - pytest-mock - моки для изоляции тестов
+- httpx - HTTP клиент для тестирования API
 
 ## Быстрый старт
 
@@ -258,6 +275,11 @@ make test
 - `make install` - установка зависимостей (включая dev-инструменты)
 - `make run` - запуск бота
 
+**API (Statistics Dashboard):**
+- `make api-run` - запуск API сервера
+- `make api-test` - тестирование API endpoints (curl)
+- `make api-docs` - открыть Swagger UI документацию
+
 **Тестирование:**
 - `make test` - запуск unit тестов (без integration)
 - `make test-cov` - запуск тестов с измерением coverage (без integration)
@@ -293,13 +315,91 @@ make test
 4. Напишите снова: **"Как меня зовут?"**
    - Бот: *"Я не знаю, как вас зовут..."* (контекст очищен)
 
+## 📊 Statistics API
+
+REST API для получения статистики по диалогам. Предназначен для интеграции с frontend дашбордом.
+
+### Запуск API
+
+```bash
+# Запустить API сервер
+make api-run
+
+# API будет доступен на http://localhost:8000
+# Swagger UI: http://localhost:8000/docs
+```
+
+### Основной endpoint
+
+```bash
+GET /api/v1/statistics?period={day|week|month|all}
+```
+
+**Параметры:**
+- `period` (optional) - период статистики: `day`, `week`, `month` (default), `all`
+
+**Пример запроса:**
+```bash
+curl "http://localhost:8000/api/v1/statistics?period=week"
+```
+
+**Ответ включает:**
+- **overview** - общая статистика (количество сообщений, пользователей, чатов, средняя длина)
+- **messages_by_role** - распределение по ролям (user, assistant, system)
+- **messages_over_time** - временной ряд (почасовая/дневная/месячная статистика)
+- **top_metrics** - ключевые показатели (активные пользователи, сообщения за период)
+
+### Документация
+
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **Примеры**: [doc/api-examples.md](doc/api-examples.md)
+
+### Текущая реализация
+
+На данный момент используется **MockStatCollector** с генерацией тестовых данных. В Sprint S5 будет добавлена реальная реализация с подключением к PostgreSQL.
+
+## 🎨 Frontend Dashboard
+
+Modern web interface for statistics dashboard and admin chat.
+
+### Tech Stack
+
+- Next.js 15 (App Router) + TypeScript + shadcn/ui + Tailwind CSS
+
+### Quick Start
+
+```bash
+# Install frontend dependencies
+make frontend-install
+
+# Start development server
+make frontend-dev
+
+# Open http://localhost:3000
+```
+
+### Commands
+
+```bash
+make frontend-dev            # Start dev server
+make frontend-build          # Production build
+make frontend-lint           # Lint code
+make frontend-format         # Format code
+make frontend-type-check     # TypeScript check
+make frontend-check-all      # All checks
+```
+
+See [frontend/README.md](frontend/README.md) for details.
+
 ## Структура проекта
 
 ```
 systech-aidd-live/
 ├── src/                    # Исходный код
 │   ├── __init__.py
-│   ├── main.py            # Точка входа
+│   ├── main.py            # Точка входа бота
+│   ├── api_server.py      # Точка входа API
 │   ├── config.py          # Конфигурация (dataclass)
 │   ├── exceptions.py      # Кастомные исключения
 │   ├── protocols.py       # Протоколы для DI
@@ -307,19 +407,34 @@ systech-aidd-live/
 │   ├── command_handler.py # Обработка команд (/start, /help, /reset, /role)
 │   ├── message_handler.py # Координация обработки сообщений
 │   ├── llm_client.py      # Работа с LLM API
-│   └── context_manager.py # Управление контекстом
+│   ├── context_manager.py # Управление контекстом
+│   ├── models.py          # SQLAlchemy модели
+│   ├── database.py        # Async DB lifecycle
+│   ├── repository.py      # Repository pattern для БД
+│   └── api/               # API модули
+│       ├── __init__.py
+│       ├── main.py        # FastAPI приложение
+│       ├── protocols.py   # StatCollectorProtocol
+│       ├── schemas.py     # Pydantic модели
+│       └── stat_collector_mock.py  # Mock реализация
 ├── prompts/               # Системные промпты
 │   └── system_prompt.txt  # Промпт AICodingExpert
-├── tests/                 # Тесты (100% coverage)
+├── tests/                 # Тесты
 │   ├── conftest.py        # Фикстуры pytest
 │   ├── test_*.py          # Unit тесты для каждого модуля
+│   ├── test_api_mock.py   # Тесты API
 │   └── test_integration.py # Интеграционные тесты
 ├── logs/                  # Логи
 ├── doc/                   # Документация
 │   ├── vision.md          # Техническое видение
-│   ├── tasklist.md        # План разработки MVP
-│   ├── tasklist_tech_debt.md # План устранения технического долга
+│   ├── api-examples.md    # Примеры использования API
+│   ├── roadmap.md         # Roadmap разработки
 │   └── adrs/              # Architecture Decision Records
+├── frontend/              # Frontend (в разработке)
+│   └── doc/
+│       ├── frontend-roadmap.md  # Roadmap frontend
+│       └── plans/
+│           └── s1-mock-api-plan.md  # План Sprint S1
 ├── .env                   # Конфигурация (не в git)
 ├── .env.example           # Пример конфигурации
 ├── pyproject.toml         # Зависимости + конфигурация инструментов

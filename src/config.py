@@ -17,6 +17,10 @@ class Config:
     max_context_messages: int
     database_url: str
     database_echo: bool
+    # API settings
+    api_host: str
+    api_port: int
+    stat_collector_mode: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -73,6 +77,17 @@ class Config:
         max_context_messages = int(os.getenv("MAX_CONTEXT_MESSAGES", "20"))
         database_echo = os.getenv("DATABASE_ECHO", "False").lower() in ("true", "1", "yes")
 
+        # API settings
+        api_host = os.getenv("API_HOST", "0.0.0.0")
+        api_port = int(os.getenv("API_PORT", "8000"))
+        stat_collector_mode = os.getenv("STAT_COLLECTOR_MODE", "mock")
+
+        # Validate stat_collector_mode
+        if stat_collector_mode not in ("mock", "real"):
+            raise ConfigError(
+                f"Invalid STAT_COLLECTOR_MODE: {stat_collector_mode}. Must be 'mock' or 'real'"
+            )
+
         return cls(
             bot_token=bot_token,
             llm_api_key=llm_api_key,
@@ -82,4 +97,7 @@ class Config:
             max_context_messages=max_context_messages,
             database_url=database_url,
             database_echo=database_echo,
+            api_host=api_host,
+            api_port=api_port,
+            stat_collector_mode=stat_collector_mode,
         )

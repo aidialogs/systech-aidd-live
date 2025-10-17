@@ -85,6 +85,9 @@ def test_config_as_dataclass() -> None:
         max_context_messages=10,
         database_url="sqlite+aiosqlite:///:memory:",
         database_echo=False,
+        api_host="0.0.0.0",
+        api_port=8000,
+        stat_collector_mode="mock",
     )
 
     assert config.bot_token == "token"
