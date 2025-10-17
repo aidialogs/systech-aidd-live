@@ -8,18 +8,32 @@
 
 ```
 systech-aidd-live/
-├── src/                    # Исходный код (10 файлов)
-├── tests/                  # Тесты (8 файлов)
-├── prompts/                # Системные промпты
-├── doc/                    # Документация
-├── logs/                   # Логи (создается автоматически)
-├── .venv/                  # Виртуальное окружение (создается uv)
-├── pyproject.toml          # Зависимости и настройки инструментов
-├── uv.lock                 # Lock-файл зависимостей
-├── Makefile                # Команды автоматизации
-├── .env                    # Конфигурация (не в git)
-├── .env.example            # Пример конфигурации
-└── README.md               # Документация
+├── src/                    # Исходный код бота и API
+│   ├── main.py            # Точка входа бота
+│   ├── api_server.py      # Точка входа API
+│   ├── api/               # API модули (FastAPI)
+│   ├── models.py          # SQLAlchemy ORM модели
+│   ├── database.py        # DB connection management
+│   ├── repository.py      # Repository pattern для БД
+│   └── ...                # Остальные модули бота
+├── frontend/              # Frontend приложение (Next.js)
+│   ├── src/               # Исходный код frontend
+│   ├── public/            # Статические файлы
+│   └── package.json       # Зависимости frontend
+├── alembic/               # Миграции базы данных
+├── tests/                 # Тесты (unit + integration)
+├── prompts/               # Системные промпты
+├── doc/                   # Документация
+├── logs/                  # Логи (создается автоматически)
+├── .venv/                 # Виртуальное окружение (создается uv)
+├── docker-compose.yml     # Docker конфигурация для PostgreSQL
+├── alembic.ini            # Конфигурация Alembic
+├── pyproject.toml         # Зависимости и настройки инструментов
+├── uv.lock                # Lock-файл зависимостей
+├── Makefile               # Команды автоматизации
+├── .env                   # Конфигурация (не в git)
+├── .env.example           # Пример конфигурации
+└── README.md              # Документация
 ```
 
 ---
@@ -176,11 +190,124 @@ contexts: dict[tuple[int, int], list[Message]]
 
 ---
 
-### `message.py` — Структура сообщения
+### `models.py` — SQLAlchemy ORM модели
+
+**Файл**: `src/models.py` (~70 строк)
+
+**Назначение**: Определяет структуру таблиц PostgreSQL через ORM.
+
+**Модели**:
+
+1. **`User`** (строки 14-30):
+   - `id` (PK) — Telegram user_id (BigInteger)
+   - `created_at` — дата создания с timezone
+   - `is_deleted` — soft delete флаг
+   - `messages` — relationship к Message
+
+2. **`Message`** (строки 33-57):
+   - `id` (PK) — автоинкремент
+   - `user_id` (FK) — ссылка на users
+   - `chat_id` — Telegram chat_id (BigInteger)
+   - `role` — роль сообщения (String(20))
+   - `content` — текст сообщения (Text)
+   - `content_length` — длина сообщения (Integer)
+   - `created_at` — дата создания с timezone
+   - `is_deleted` — soft delete флаг
+   - `user` — relationship к User
+
+**Индексы** (строки 60-68):
+- `idx_messages_user_chat` — составной индекс для быстрого поиска сообщений
+- `idx_users_active` — индекс для фильтрации активных пользователей
+
+---
+
+### `database.py` — Управление подключением к БД
+
+**Файл**: `src/database.py` (~55 строк)
+
+**Назначение**: Lifecycle управление async сессиями PostgreSQL.
+
+**Ключевые функции**:
+
+1. **`init_database`** (строки 15-22):
+   - Создает async engine
+   - Создает async_sessionmaker
+   - Настраивает connection pool
+
+2. **`close_database`** (строки 25-33):
+   - Закрывает все соединения при остановке бота
+   - Вызывается в finally блоке main.py
+
+3. **`get_session`** (строки 35-52):
+   - Async context manager для получения сессии
+   - Автоматический rollback при ошибках
+   - Используется в Repository
+
+**Глобальные переменные**:
+- `engine` — SQLAlchemy async engine
+- `async_session_maker` — фабрика для создания сессий
+
+---
+
+### `repository.py` — Repository pattern
+
+**Файл**: `src/repository.py` (~150 строк)
+
+**Назначение**: Инкапсуляция логики работы с БД.
+
+**Ключевые методы**:
+
+1. **`ensure_user`** (строки 20-43):
+   - Проверяет существование пользователя
+   - Создает нового пользователя если не существует
+   - Возвращает User модель
+
+2. **`add_message`** (строки 45-75):
+   - Создает новое сообщение в БД
+   - Автоматически вызывает ensure_user
+   - Возвращает Message модель
+
+3. **`get_messages`** (строки 77-124):
+   - Получает последние N сообщений для контекста
+   - System prompt всегда первый (не учитывается в лимите)
+   - Возвращает список Message моделей
+
+4. **`soft_delete_messages`** (строки 126-150):
+   - Помечает сообщения как удаленные (is_deleted=True)
+   - Не удаляет физически из БД
+   - Возвращает количество удаленных сообщений
+
+---
+
+### `api_server.py` — Точка входа API
+
+**Файл**: `src/api_server.py` (~90 строк)
+
+**Назначение**: Запуск FastAPI сервера.
+
+**Ключевые операции** (функция `main`):
+1. Загрузка конфигурации из .env
+2. Инициализация database
+3. Выбор StatCollector (mock/real)
+4. Создание LLMClient для chat API
+5. Создание ChatHandler
+6. Создание FastAPI app через create_app
+7. Запуск uvicorn сервера
+
+**Endpoints**:
+- `/api/v1/statistics` — статистика сообщений
+- `/api/v1/chat/message` — отправка сообщения
+- `/api/v1/chat/history` — история чата
+- `/docs` — Swagger UI
+- `/health` — health check
+
+---
+
+### `message.py` — Data class для LLM
 
 **Файл**: `src/message.py` (13 строк)
 
-**Назначение**: Data class для представления сообщения.
+**Назначение**: Простой data class для передачи в LLM API (отдельно от ORM моделей).
 
 **Поля**:
 - `role: str` — "system", "user" или "assistant"
@@ -227,6 +354,140 @@ contexts: dict[tuple[int, int], list[Message]]
 2. **`LLMError`** (строки 8-9):
    - Ошибки LLM API (timeout, unauthorized, etc.)
    - Перехватывается в `MessageHandler` → дружелюбное сообщение
+
+---
+
+## 📁 src/api/ — API модули
+
+### `main.py` — FastAPI приложение
+
+**Файл**: `src/api/main.py`
+
+**Назначение**: Создание FastAPI приложения и регистрация роутов.
+
+**Ключевые функции**:
+- `create_app(stat_collector, chat_handler)` — фабрика FastAPI app
+- Регистрирует endpoints для statistics и chat
+- Настраивает CORS для frontend
+- Добавляет health check endpoint
+
+### `schemas.py` — Pydantic схемы для Statistics
+
+**Файл**: `src/api/schemas.py`
+
+**Назначение**: Pydantic модели для валидации и документации API.
+
+**Схемы**:
+- `OverviewStats` — общая статистика
+- `MessagesByRole` — распределение по ролям
+- `TimeSeriesEntry` — точка временного ряда
+- `TopMetrics` — ключевые показатели
+- `StatisticsResponse` — полный ответ statistics endpoint
+
+### `chat_schemas.py` — Pydantic схемы для Chat
+
+**Файл**: `src/api/chat_schemas.py`
+
+**Назначение**: Pydantic модели для chat API.
+
+**Схемы**:
+- `ChatMessageRequest` — запрос на отправку сообщения
+- `ChatMessageResponse` — ответ с ответом бота
+- `ChatHistoryMessage` — сообщение в истории
+- `ChatHistoryResponse` — список истории сообщений
+
+### `protocols.py` — Protocol интерфейсы для API
+
+**Файл**: `src/api/protocols.py`
+
+**Назначение**: Абстракция для StatCollector.
+
+**Protocol**:
+- `StatCollectorProtocol` — интерфейс для получения статистики
+  - `async def get_statistics(period: str) -> dict`
+
+### `stat_collector_mock.py` — Mock реализация
+
+**Файл**: `src/api/stat_collector_mock.py`
+
+**Назначение**: Генерация тестовых данных для разработки frontend.
+
+**Особенности**:
+- Генерирует реалистичные данные
+- Поддерживает разные периоды (day/week/month/all)
+- Не требует реальной БД
+
+### `stat_collector_real.py` — Real реализация
+
+**Файл**: `src/api/stat_collector_real.py`
+
+**Назначение**: Получение реальной статистики из PostgreSQL.
+
+**Особенности**:
+- Использует SQLAlchemy для запросов к БД
+- Группировка по времени (час/день/месяц)
+- Фильтрация по периоду
+- Агрегация статистики
+
+### `chat_handler.py` — Обработчик chat API
+
+**Файл**: `src/api/chat_handler.py`
+
+**Назначение**: Обработка chat сообщений через REST API.
+
+**Режимы**:
+- `normal` — обычный чат с LLM
+- `admin` — админ режим с text2sql возможностями
+
+**Методы**:
+- `handle_message()` — обработка входящего сообщения
+- `get_history()` — получение истории чата
+
+---
+
+## 📁 frontend/ — Frontend приложение
+
+**Технологии**: Next.js 15 + TypeScript + shadcn/ui + Tailwind CSS
+
+**Структура**:
+```
+frontend/
+├── src/
+│   ├── app/               # Next.js App Router pages
+│   │   ├── dashboard/     # Dashboard страница
+│   │   └── chat/          # Chat страница
+│   ├── components/        # React компоненты
+│   │   ├── dashboard/     # Компоненты dashboard
+│   │   ├── chat/          # Компоненты chat
+│   │   ├── shared/        # Общие компоненты
+│   │   └── ui/            # shadcn/ui базовые компоненты
+│   └── config/            # Конфигурация
+├── public/                # Статические файлы
+└── package.json           # Зависимости (управляется pnpm)
+```
+
+**Страницы**:
+- `/dashboard` — визуализация статистики сообщений и пользователей
+- `/chat` — web-интерфейс для чата с ботом
+
+**Команды**:
+- `make frontend-install` — установка зависимостей
+- `make frontend-dev` — запуск dev сервера
+- `make frontend-build` — production build
+
+---
+
+## 📁 alembic/ — Миграции базы данных
+
+**Файлы**:
+- `env.py` — конфигурация Alembic для async SQLAlchemy
+- `versions/` — директория с миграциями
+  - `09eb92e9cbfc_create_users_and_messages_tables.py` — первая миграция
+
+**Команды**:
+- `make db-migrate` — применить миграции
+- `make db-rollback` — откатить последнюю миграцию
+- `make db-revision message="название"` — создать новую миграцию
 
 ---
 
@@ -439,24 +700,31 @@ MAX_CONTEXT_MESSAGES=20
 
 ## Метрики проекта
 
-**Код**:
-- 10 файлов в `src/`
-- ~500 строк кода (без комментариев и пустых строк)
+**Backend код**:
+- 16 файлов в `src/` (включая api/)
+- ~1500 строк кода Python
+- PostgreSQL БД с 2 таблицами
+
+**Frontend код**:
+- Next.js 15 приложение
+- TypeScript + shadcn/ui
+- 2 основные страницы (dashboard, chat)
 
 **Тесты**:
-- 8 файлов в `tests/`
-- 30 тестов
-- 100% code coverage
+- 9 файлов в `tests/`
+- Unit + integration тесты
+- High code coverage
 
 **Документация**:
-- README.md (365 строк)
-- vision.md (661 строка)
-- 5 ADR файлов
-- 5 гайдов (включая этот)
+- README.md
+- 6 гайдов онбординга
+- 7 ADR файлов
+- API документация (Swagger UI)
 
 **Зависимости**:
-- 3 runtime: aiogram, openai, python-dotenv
-- 5 dev: pytest, ruff, mypy, pytest-cov, pytest-mock
+- Runtime: aiogram, openai, fastapi, sqlalchemy, asyncpg, alembic, uvicorn
+- Dev: pytest, ruff, mypy, pytest-cov, httpx
+- Frontend: next, react, typescript, tailwindcss, shadcn/ui
 
 ---
 

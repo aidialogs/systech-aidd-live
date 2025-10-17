@@ -21,34 +21,41 @@
 ## 📖 Доступные гайды
 
 ### [GUIDE-01: Getting Started](01-getting-started.md)
-**Цель**: За 15 минут запустить бота локально и отправить первое сообщение.
+**Цель**: За 20 минут запустить бота локально с PostgreSQL и отправить первое сообщение.
 
 **Охват**:
-- Установка Python, uv
+- Установка Python, uv, Docker
 - Клонирование репозитория
 - Получение токенов (Telegram, OpenRouter)
-- Настройка .env
+- Настройка .env (включая DATABASE_URL)
+- Запуск PostgreSQL в Docker
+- Применение миграций БД
 - Первый запуск и тестирование
-- Troubleshooting
+- Проверка персистентности контекста
+- Troubleshooting (включая проблемы с БД)
 
 **Для кого**: Новые разработчики, первый запуск проекта.
 
 ---
 
 ### [GUIDE-02: Архитектура проекта](02-architecture.md)
-**Цель**: Понять, как устроена система на высоком уровне.
+**Цель**: Понять, как устроена система на высоком уровне (Bot + API + Frontend + DB).
 
 **Охват**:
-- High-level диаграммы компонентов (Mermaid)
-- Основные модули и их взаимодействие
+- High-level диаграммы системы (Telegram Bot, REST API, Frontend, PostgreSQL)
+- Основные компоненты: MessageHandler, Repository, Database, API, Frontend
 - Принципы проектирования (SOLID, KISS, DRY)
-- Async-first подход
+- Async-first подход с SQLAlchemy 2.0
+- Repository pattern для работы с БД
 - Flow обработки сообщений
+- Персистентное хранение в PostgreSQL
+- Soft delete стратегия
+- REST API с FastAPI
 - Обработка ошибок
 - Логирование
-- ADR (Architecture Decision Records)
+- ADR (включая ADR-06: PostgreSQL, ADR-07: Frontend stack)
 
-**Для кого**: Разработчики, желающие понять архитектуру перед началом работы.
+**Для кого**: Разработчики, желающие понять полную архитектуру перед началом работы.
 
 ---
 
@@ -73,19 +80,29 @@
 **Цель**: Пройтись по всем файлам проекта с объяснением назначения.
 
 **Охват**:
-- Структура проекта (src/, tests/, doc/)
-- Детальный разбор каждого модуля:
-  - main.py — точка входа
+- Структура проекта (src/, frontend/, alembic/, tests/, doc/)
+- Детальный разбор модулей бота:
+  - main.py — точка входа бота
   - config.py — конфигурация
   - message_handler.py — координатор
   - command_handler.py — команды
-  - context_manager.py — память
   - llm_client.py — LLM API
-  - message.py — структура данных
+  - models.py — SQLAlchemy ORM модели
+  - database.py — управление подключением к БД
+  - repository.py — Repository pattern
+  - message.py — data class для LLM
   - protocols.py — DI интерфейсы
   - exceptions.py — custom errors
+- Детальный разбор API модулей:
+  - api_server.py — точка входа API
+  - src/api/main.py — FastAPI приложение
+  - src/api/schemas.py — Pydantic схемы
+  - src/api/stat_collector_*.py — реализации StatCollector
+  - src/api/chat_handler.py — обработчик chat API
+- Frontend структура (Next.js)
+- Миграции БД (Alembic)
 - Тестовые файлы и fixtures
-- Конфигурационные файлы (pyproject.toml, Makefile)
+- Конфигурационные файлы (pyproject.toml, Makefile, docker-compose.yml)
 - Навигация по коду (где искать что)
 
 **Для кого**: Разработчики, готовые погрузиться в детали реализации.
@@ -100,10 +117,13 @@
 - Пошаговый workflow (изучение → ветка → TDD → код → проверка → коммит)
 - Правила кодирования (один класс = один файл, type hints, docstrings)
 - Инструменты (make format, make lint, make test, make check-all)
+- Работа с БД (миграции, тестирование с БД)
+- Работа с API (endpoints, Swagger UI, тестирование)
 - VSCode setup (debugging, tasks, extensions)
-- Пример: добавление новой команды от начала до конца
+- Пример: добавление новой команды с async/await и БД
+- Частые сценарии (новый модуль, изменение БД, новый API endpoint)
 - ADR процесс
-- Checklist перед коммитом
+- Checklist перед коммитом (включая миграции и API)
 
 **Для кого**: Разработчики, готовые добавлять новые фичи.
 
@@ -158,14 +178,14 @@ graph TD
 
 | Гайд | Время чтения | Сложность | Обязательность |
 |------|--------------|-----------|----------------|
-| GUIDE-01 | 15 мин | ⭐☆☆☆☆ | Must have |
-| GUIDE-02 | 30 мин | ⭐⭐⭐☆☆ | Must have |
+| GUIDE-01 | 20 мин | ⭐⭐☆☆☆ | Must have |
+| GUIDE-02 | 40 мин | ⭐⭐⭐⭐☆ | Must have |
 | GUIDE-03 | 20 мин | ⭐⭐☆☆☆ | Nice to have |
-| GUIDE-06 | 45 мин | ⭐⭐⭐⭐☆ | Must have |
-| GUIDE-07 | 60 мин | ⭐⭐⭐⭐☆ | Must have |
+| GUIDE-06 | 60 мин | ⭐⭐⭐⭐⭐ | Must have |
+| GUIDE-07 | 70 мин | ⭐⭐⭐⭐⭐ | Must have |
 | GUIDE-08 | 45 мин | ⭐⭐⭐⭐☆ | Must have |
 
-**Итого**: ~3.5 часа на полное понимание проекта (включая визуальный обзор).
+**Итого**: ~4 часа на полное понимание проекта (включая БД, API, Frontend).
 
 ---
 
@@ -176,8 +196,17 @@ graph TD
 - **[README.md](../../README.md)** — главная документация проекта
 - **[QUICKSTART.md](../../QUICKSTART.md)** — быстрый старт для разработчиков
 - **[doc/vision.md](../vision.md)** — техническое видение проекта
-- **[doc/tasklist.md](../tasklist.md)** — история разработки (8 итераций)
-- **[doc/adrs/](../adrs/)** — Architecture Decision Records (5 ADR)
+- **[doc/roadmap.md](../roadmap.md)** — roadmap разработки
+- **[doc/adrs/](../adrs/)** — Architecture Decision Records:
+  - ADR-01: OpenAI Compatible API
+  - ADR-02: aiogram для Telegram
+  - ADR-03: In-memory storage (устарел)
+  - ADR-04: Protocols для DI
+  - ADR-05: KISS принцип
+  - ADR-06: PostgreSQL + SQLAlchemy 2.0
+  - ADR-07: Frontend stack (Next.js + TypeScript)
+- **[doc/api-examples.md](../api-examples.md)** — примеры использования API
+- **[frontend/README.md](../../frontend/README.md)** — документация frontend
 
 ---
 

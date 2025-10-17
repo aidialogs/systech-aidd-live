@@ -6,22 +6,24 @@
 
 ## Стратегия тестирования
 
-Проект имеет **100% code coverage** с разделением на unit и integration тесты.
+Проект имеет comprehensive test suite с разделением на unit и integration тесты. Тесты покрывают бота, БД операции и API endpoints.
 
 ```mermaid
 graph TB
-    A[30 тестов] --> B[29 Unit тестов]
-    A --> C[1 Integration тест]
+    A[Тестовый набор] --> B[Unit тесты]
+    A --> C[Integration тесты]
     
-    B --> D[test_message.py: 4]
-    B --> E[test_config.py: 5]
-    B --> F[test_command_handler.py: 6]
-    B --> G[test_message_handler.py: 7]
-    B --> H[test_llm_client.py: 3]
-    B --> I[test_context_manager.py: 3]
-    B --> J[test_integration.py: 1]
+    B --> D[test_message.py]
+    B --> E[test_config.py]
+    B --> F[test_command_handler.py]
+    B --> G[test_message_handler.py]
+    B --> H[test_llm_client.py]
+    B --> I[test_repository.py]
+    B --> J[test_models.py]
+    B --> K[test_api_mock.py]
     
-    C --> K[test_llm_client.py: 1]
+    C --> L[test_llm_client.py]
+    C --> M[test_integration.py]
     
     style A fill:#4A90E2,stroke:#2E5C8A,color:#FFF
     style B fill:#2ECC71,stroke:#229954,color:#FFF
@@ -33,21 +35,30 @@ graph TB
     style H fill:#9B59B6,stroke:#6C3D7C,color:#FFF
     style I fill:#9B59B6,stroke:#6C3D7C,color:#FFF
     style J fill:#9B59B6,stroke:#6C3D7C,color:#FFF
-    style K fill:#FF6B6B,stroke:#C44545,color:#FFF
+    style K fill:#9B59B6,stroke:#6C3D7C,color:#FFF
+    style L fill:#FF6B6B,stroke:#C44545,color:#FFF
+    style M fill:#FF6B6B,stroke:#C44545,color:#FFF
 ```
 
 ---
 
 ## Типы тестов
 
-### Unit тесты (29 штук)
+### Unit тесты
 **Назначение**: Тестируют отдельные компоненты в изоляции.
 
 **Характеристики**:
 - Используют моки для внешних зависимостей
-- Быстрые (~2.8s для всех)
-- Не требуют внешних сервисов (LLM API, БД)
+- Используют SQLite in-memory для тестов с БД
+- Быстрые (~3-4s для всех)
+- Не требуют внешних сервисов (LLM API, PostgreSQL)
 - Запускаются на каждый коммит
+
+**Категории unit тестов**:
+- **Бот логика**: message_handler, command_handler, llm_client
+- **БД операции**: repository, models (с SQLite in-memory)
+- **API endpoints**: test_api_mock (с mock StatCollector)
+- **Core компоненты**: message, config, protocols
 
 **Запуск**:
 ```bash
@@ -55,11 +66,12 @@ make test              # Unit тесты
 make test-cov          # Unit тесты с coverage
 ```
 
-### Integration тесты (1 штука)
+### Integration тесты
 **Назначение**: Тестируют реальные интеграции с внешними сервисами.
 
 **Характеристики**:
 - Делают реальные HTTP запросы к LLM API
+- Могут использовать реальную PostgreSQL (опционально)
 - Медленные (~1-2s на тест)
 - Требуют валидные API ключи в `.env`
 - Запускаются вручную или на CI для main ветки
@@ -76,6 +88,29 @@ make test-all          # Все тесты (unit + integration)
 async def test_llm_real_api_call():
     """Integration test with real LLM API."""
     ...
+```
+
+### Тестирование БД
+
+**Стратегия**: Unit тесты используют SQLite in-memory вместо PostgreSQL.
+
+**Преимущества**:
+- Быстрые тесты (нет необходимости в Docker)
+- Изолированные тесты (каждый тест получает чистую БД)
+- Совместимость: SQLite поддерживает большинство SQL операций
+
+**Пример fixture**:
+```python
+@pytest.fixture
+async def db_session():
+    """Create async SQLite in-memory session for testing."""
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
+    async with async_session_maker() as session:
+        yield session
 ```
 
 ---
