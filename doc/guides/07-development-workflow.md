@@ -68,13 +68,21 @@ flowchart TD
 2. **Изучите ADR** (`doc/adrs/`):
    - ADR-01: Почему OpenAI Compatible API
    - ADR-02: Почему aiogram
-   - ADR-03: In-memory storage
+   - ADR-03: In-memory storage (устарел)
    - ADR-04: Protocols для DI
    - ADR-05: KISS принцип
+   - ADR-06: PostgreSQL + SQLAlchemy
+   - ADR-07: Frontend stack (Next.js)
 
 3. **Проверьте существующий код**:
    - Есть ли похожая логика?
    - Можно ли переиспользовать компоненты?
+
+4. **Убедитесь, что БД запущена**:
+   ```bash
+   make db-up
+   docker ps | grep postgres
+   ```
 
 ---
 
@@ -410,14 +418,24 @@ git checkout -b feature/add-stats-command
 
 ```python
 # tests/test_command_handler.py
-def test_stats_command(command_handler: CommandHandler) -> None:
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
+
+@pytest.mark.asyncio
+async def test_stats_command(
+    command_handler: CommandHandler,
+    db_session: AsyncSession
+) -> None:
     """Test /stats command returns user statistics."""
-    # Setup: добавим сообщения в контекст
-    command_handler.context_manager.add_message(123, 456, Message("user", "Hello"))
-    command_handler.context_manager.add_message(123, 456, Message("assistant", "Hi"))
+    # Setup: добавим сообщения в БД через repository
+    from src.repository import MessageRepository
+    repo = MessageRepository(db_session)
+    await repo.add_message(123, 456, "user", "Hello")
+    await repo.add_message(123, 456, "assistant", "Hi")
+    await db_session.commit()
     
     # Act
-    response = command_handler.handle_command("/stats", 123, 456)
+    response = await command_handler.handle_command("/stats", 123, 456)
     
     # Assert
     assert response is not None
@@ -429,30 +447,38 @@ def test_stats_command(command_handler: CommandHandler) -> None:
 
 **Результат**: ❌ FAILED (команда не существует)
 
+**Примечание**: Теперь тесты работают с реальной БД (используется SQLite in-memory для тестов)
+
 #### 4. Пишем код
 
 ```python
 # src/command_handler.py
-def handle_command(self, text: str, user_id: int, chat_id: int) -> str | None:
+async def handle_command(self, text: str, user_id: int, chat_id: int) -> str | None:
     """Handle command and return response, or None if not a command."""
     # ... existing commands ...
     
     if text == "/stats":
         logging.info(f"Command /stats from user_id={user_id}")
-        return self._get_stats(user_id, chat_id)
+        return await self._get_stats(user_id, chat_id)
     
     return None
 
-def _get_stats(self, user_id: int, chat_id: int) -> str:
+async def _get_stats(self, user_id: int, chat_id: int) -> str:
     """Get statistics for user."""
-    context = self.context_manager.get_context(user_id, chat_id)
-    message_count = len(context)
+    # Получаем сессию БД
+    async with get_session() as session:
+        repo = MessageRepository(session)
+        messages = await repo.get_messages(user_id, chat_id, limit=20)
+        message_count = len(messages)
+    
     return f"📊 Статистика:\nСообщений в контексте: {message_count}"
 ```
 
 Запускаем тест снова: `uv run pytest tests/test_command_handler.py::test_stats_command`
 
 **Результат**: ✅ PASSED
+
+**Важно**: Обратите внимание на `async`/`await` - теперь команды работают с БД асинхронно
 
 #### 5. Обновляем help
 
@@ -569,6 +595,23 @@ async def handle_message(...):
 5. Написать тесты: `tests/test_new_module.py`
 6. Обновить `README.md`
 
+### Изменение логики работы с БД
+
+1. Обновить ORM модели в `src/models.py` (если нужно)
+2. Создать миграцию: `make db-revision message="описание"`
+3. Применить миграцию: `make db-migrate`
+4. Обновить Repository методы
+5. Обновить тесты (используют SQLite in-memory)
+6. Запустить `make test`
+
+### Добавление нового API endpoint
+
+1. Добавить Pydantic схемы в `src/api/schemas.py`
+2. Добавить endpoint в `src/api/main.py`
+3. Написать тесты в `tests/test_api_*.py`
+4. Проверить документацию в Swagger UI: `make api-docs`
+5. Протестировать вручную: `make api-test`
+
 ### Изменение существующей логики
 
 1. Найти соответствующий тест
@@ -591,6 +634,8 @@ async def handle_message(...):
 - [ ] `make lint` — 0 ошибок ruff и mypy
 - [ ] `make test` — все тесты проходят
 - [ ] Coverage не упал (проверить через `make test-cov`)
+- [ ] Миграции применены (если изменялись модели): `make db-migrate`
+- [ ] API работает (если изменялся API): `make api-run` + `make api-test`
 - [ ] Документация обновлена (если нужно)
 - [ ] Commit message правильного формата
 - [ ] Мануальное тестирование пройдено
