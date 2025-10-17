@@ -1,7 +1,7 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Code, Database } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ModeToggleProps {
   mode: 'normal' | 'admin';
@@ -10,29 +10,31 @@ interface ModeToggleProps {
 
 export function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
   return (
-    <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
-      <Button
-        variant={mode === 'normal' ? 'default' : 'ghost'}
-        size="sm"
+    <div className="inline-flex rounded-lg border p-1 bg-muted">
+      <button
         onClick={() => onModeChange('normal')}
-        className="h-8"
-      >
-        💬 Normal
-      </Button>
-      <Button
-        variant={mode === 'admin' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onModeChange('admin')}
-        className="h-8 gap-1.5"
-      >
-        🔧 Admin
-        {mode === 'admin' && (
-          <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
-            SQL
-          </Badge>
+        className={cn(
+          'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
+          mode === 'normal'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
         )}
-      </Button>
+      >
+        <Code size={16} />
+        Normal
+      </button>
+      <button
+        onClick={() => onModeChange('admin')}
+        className={cn(
+          'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
+          mode === 'admin'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+        )}
+      >
+        <Database size={16} />
+        Admin SQL
+      </button>
     </div>
   );
 }
-
