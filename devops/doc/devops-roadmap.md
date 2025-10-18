@@ -57,6 +57,9 @@ MVP-подход к внедрению DevOps процессов в проект
 
 ## Sprint D1: Build & Publish
 
+**Статус:** ✅ **ЗАВЕРШЕН** (18.10.2025)  
+**Отчет:** [d1-final-report.md](reports/d1-final-report.md)
+
 ### Цели
 - Автоматизировать сборку Docker образов через GitHub Actions
 - Публиковать образы в GitHub Container Registry (ghcr.io)
