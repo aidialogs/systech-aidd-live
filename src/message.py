@@ -1,4 +1,10 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src import models
 
 
 class Message:
@@ -25,7 +31,7 @@ class Message:
         return {"role": self.role, "content": self.content}
 
     @classmethod
-    def from_orm(cls, orm_message: "models.Message") -> "Message":  # type: ignore[name-defined]
+    def from_orm(cls, orm_message: models.Message) -> Message:
         """Create Message from ORM model instance.
 
         Args:

@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.message import Message
 from src.repository import MessageRepository
@@ -9,7 +9,9 @@ from src.repository import MessageRepository
 class ContextManager:
     """Manages conversation context for multiple users and chats with database persistence."""
 
-    def __init__(self, session_maker: async_sessionmaker, max_context_messages: int) -> None:
+    def __init__(
+        self, session_maker: async_sessionmaker[AsyncSession], max_context_messages: int
+    ) -> None:
         """Initialize context manager with session maker and max context size.
 
         Args:

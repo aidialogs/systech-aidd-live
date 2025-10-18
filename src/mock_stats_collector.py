@@ -1,6 +1,6 @@
 """Mock implementation of statistics collector with fixed data."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 
@@ -22,16 +22,15 @@ class MockStatCollector:
         """
         if period_days == 7:
             return self._get_stats_7d()
-        elif period_days == 30:
+        if period_days == 30:
             return self._get_stats_30d()
-        else:
-            # Default to 7 days
-            return self._get_stats_7d()
+        # Default to 7 days
+        return self._get_stats_7d()
 
     def _get_stats_7d(self) -> dict[str, Any]:
         """Get statistics for last 7 days."""
         # Generate dates for last 7 days
-        end_date = datetime.now().date()
+        end_date = datetime.now(tz=UTC).date()
         dates = [(end_date - timedelta(days=i)) for i in range(6, -1, -1)]
 
         return {
@@ -55,7 +54,7 @@ class MockStatCollector:
     def _get_stats_30d(self) -> dict[str, Any]:
         """Get statistics for last 30 days."""
         # Generate dates for last 30 days
-        end_date = datetime.now().date()
+        end_date = datetime.now(tz=UTC).date()
         dates = [(end_date - timedelta(days=i)) for i in range(29, -1, -1)]
 
         return {
@@ -98,4 +97,3 @@ class MockStatCollector:
                 {"date": dates[29].isoformat(), "messages": 2789},
             ],
         }
-

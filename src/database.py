@@ -14,11 +14,11 @@ async_session_maker = None
 
 def get_session_factory(database_url: str, echo: bool = False) -> async_sessionmaker[AsyncSession]:
     """Create and return a session factory.
-    
+
     Args:
         database_url: Database connection URL
         echo: Whether to echo SQL statements
-        
+
     Returns:
         Async session maker factory
     """

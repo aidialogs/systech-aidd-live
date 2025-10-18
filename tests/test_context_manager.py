@@ -49,10 +49,10 @@ async def test_context_manager_operations(context_manager: ContextManager) -> No
 
 
 @pytest.mark.asyncio
-async def test_context_trimming(context_manager: ContextManager) -> None:
+async def test_context_trimming() -> None:
     """Test that context is trimmed when max_context_messages is exceeded."""
     # Use custom context manager with limit 5
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
     from src import models
@@ -60,7 +60,9 @@ async def test_context_trimming(context_manager: ContextManager) -> None:
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
 
-    session_maker = async_sessionmaker(engine, expire_on_commit=False)
+    session_maker: async_sessionmaker[AsyncSession] = async_sessionmaker(
+        engine, expire_on_commit=False
+    )
     cm = ContextManager(session_maker, max_context_messages=5)
 
     # Добавить system prompt

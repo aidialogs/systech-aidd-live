@@ -1,11 +1,14 @@
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.context_manager import ContextManager
 from src.message import Message
 
 
 @pytest.mark.asyncio
-async def test_context_trimming_with_many_messages(async_session_maker) -> None:  # type: ignore[no-untyped-def]
+async def test_context_trimming_with_many_messages(
+    async_session_maker: async_sessionmaker[AsyncSession],
+) -> None:
     """Тест обрезки контекста при большом количестве сообщений"""
     cm = ContextManager(async_session_maker, max_context_messages=20)
 

@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.command_handler import CommandHandler
 from src.context_manager import ContextManager
@@ -13,7 +14,7 @@ SetupHandlerTuple = tuple[MessageHandler, AsyncMock, ContextManager, CommandHand
 
 
 @pytest.fixture
-async def setup_handler(async_session_maker) -> SetupHandlerTuple:  # type: ignore[no-untyped-def]
+async def setup_handler(async_session_maker: async_sessionmaker[AsyncSession]) -> SetupHandlerTuple:
     """Set up MessageHandler with mocked dependencies."""
     mock_llm = AsyncMock()
     mock_llm.get_response = AsyncMock(return_value="AI response")
@@ -70,7 +71,7 @@ async def test_handle_regular_message(setup_handler: SetupHandlerTuple) -> None:
 
 
 @pytest.mark.asyncio
-async def test_handle_none_text(async_session_maker) -> None:  # type: ignore[no-untyped-def]
+async def test_handle_none_text(async_session_maker: async_sessionmaker[AsyncSession]) -> None:
     """Test handling message with None text."""
     mock_llm = AsyncMock()
     context_manager = ContextManager(async_session_maker, max_context_messages=20)

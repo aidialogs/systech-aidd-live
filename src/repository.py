@@ -27,7 +27,7 @@ class MessageRepository:
             User model instance
         """
         # Check if user exists
-        stmt = select(models.User).where(models.User.id == user_id, models.User.is_deleted == False)
+        stmt = select(models.User).where(models.User.id == user_id, ~models.User.is_deleted)
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
 
@@ -94,7 +94,7 @@ class MessageRepository:
                 models.Message.user_id == user_id,
                 models.Message.chat_id == chat_id,
                 models.Message.role == "system",
-                models.Message.is_deleted == False,
+                ~models.Message.is_deleted,
             )
             .order_by(models.Message.created_at.asc())
             .limit(1)
@@ -110,7 +110,7 @@ class MessageRepository:
                 models.Message.user_id == user_id,
                 models.Message.chat_id == chat_id,
                 models.Message.role != "system",
-                models.Message.is_deleted == False,
+                ~models.Message.is_deleted,
             )
             .order_by(models.Message.created_at.desc())
             .limit(messages_limit)
@@ -138,13 +138,13 @@ class MessageRepository:
             .where(
                 models.Message.user_id == user_id,
                 models.Message.chat_id == chat_id,
-                models.Message.is_deleted == False,
+                ~models.Message.is_deleted,
             )
             .values(is_deleted=True)
         )
         result = await self.session.execute(stmt)
         await self.session.flush()
 
-        count = result.rowcount or 0
+        count = result.rowcount or 0  # type: ignore[attr-defined]
         logger.info(f"Soft deleted {count} messages for user_id={user_id} chat_id={chat_id}")
         return count

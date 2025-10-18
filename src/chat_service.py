@@ -80,4 +80,3 @@ class ChatService:
         except Exception as e:
             logger.error(f"Unexpected error handling chat message: {e!s}")
             raise LLMError(f"Failed to handle chat message: {e!s}") from e
-

@@ -1,11 +1,15 @@
 """Shared fixtures for tests."""
 
 from collections.abc import AsyncGenerator
-from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from src import models
 from src.command_handler import CommandHandler
@@ -32,7 +36,7 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-async def async_engine() -> AsyncGenerator[Any, None]:
+async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
     """Create async engine for testing with SQLite in-memory database."""
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
 
@@ -47,15 +51,15 @@ async def async_engine() -> AsyncGenerator[Any, None]:
 
 
 @pytest.fixture
-def async_session_maker(async_engine: Any) -> async_sessionmaker:  # type: ignore[type-arg]
+def async_session_maker(async_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     """Create async session maker for testing."""
     return async_sessionmaker(async_engine, expire_on_commit=False)
 
 
 @pytest.fixture
 async def async_session(
-    async_session_maker: async_sessionmaker,
-) -> AsyncGenerator[AsyncSession, None]:  # type: ignore[type-arg]
+    async_session_maker: async_sessionmaker[AsyncSession],
+) -> AsyncGenerator[AsyncSession, None]:
     """Create async session for testing."""
     async with async_session_maker() as session:
         yield session
@@ -68,7 +72,7 @@ async def repository(async_session: AsyncSession) -> MessageRepository:
 
 
 @pytest.fixture
-def context_manager(async_session_maker: async_sessionmaker) -> ContextManager:  # type: ignore[type-arg]
+def context_manager(async_session_maker: async_sessionmaker[AsyncSession]) -> ContextManager:
     """Create a ContextManager instance with test database for testing."""
     return ContextManager(async_session_maker, max_context_messages=20)
 

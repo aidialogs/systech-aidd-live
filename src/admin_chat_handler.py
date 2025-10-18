@@ -136,9 +136,7 @@ class AdminChatHandler:
         # Clean up response (remove markdown, extra whitespace)
         sql_query = response.strip()
         sql_query = sql_query.replace("```sql", "").replace("```", "")
-        sql_query = sql_query.strip()
-
-        return sql_query
+        return sql_query.strip()
 
     async def _generate_answer(self, question: str, query_results: str) -> str:
         """Generate natural language answer from query results.
@@ -160,4 +158,3 @@ class AdminChatHandler:
         ]
 
         return await self.llm_client.get_response(messages)
-

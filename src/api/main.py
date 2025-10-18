@@ -1,10 +1,12 @@
 """FastAPI application for statistics and chat API."""
 
 import logging
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from enum import Enum
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -62,7 +64,7 @@ session_factory_global = None
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifespan context manager for FastAPI app."""
     global chat_service, session_factory_global
 
@@ -129,14 +131,14 @@ async def root() -> dict[str, str]:
 
 
 @app.get("/api/stats")
-async def get_stats(period: Period = Query(Period.SEVEN_DAYS, description="Период статистики")):
+async def get_stats(period: Period = Period.SEVEN_DAYS) -> dict[str, Any]:
     """Получить статистику за указанный период.
 
     Args:
         period: Период для статистики (7d или 30d)
 
     Returns:
-        Статистика с метриками и временным рядом
+        Статистика c метриками и временным рядом
 
     Examples:
         - GET /api/stats?period=7d  - статистика за последние 7 дней
@@ -178,16 +180,14 @@ async def send_chat_message(request: SendMessageRequest) -> ChatResponse:
                 session_id=request.session_id,
             )
 
-        elif request.mode == ChatMode.ADMIN:
+        if request.mode == ChatMode.ADMIN:
             # Admin mode: text2sql analytics
             # Create a new query executor for this request
             async with session_factory_global() as session:
                 query_executor = QueryExecutor(session)
                 admin_handler = AdminChatHandler(chat_service.llm_client, query_executor)
 
-                answer, sql_query = await admin_handler.handle_analytics_question(
-                    request.message
-                )
+                answer, sql_query = await admin_handler.handle_analytics_question(request.message)
 
                 return ChatResponse(
                     message=answer,
@@ -197,23 +197,23 @@ async def send_chat_message(request: SendMessageRequest) -> ChatResponse:
 
     except LLMError as e:
         logging.error(f"LLM error: {e!s}")
-        raise HTTPException(status_code=500, detail="Failed to get LLM response")
+        raise HTTPException(status_code=500, detail="Failed to get LLM response") from e
 
     except QueryExecutionError as e:
         logging.error(f"Query execution error: {e!s}")
-        raise HTTPException(status_code=400, detail=f"Query execution failed: {e!s}")
+        raise HTTPException(status_code=400, detail=f"Query execution failed: {e!s}") from e
 
     except Exception as e:
         logging.error(f"Unexpected error: {e!s}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @app.get("/api/chat/history/{session_id}")
-async def get_chat_history(session_id: str) -> list[dict[str, str]]:
+async def get_chat_history(_session_id: str) -> list[dict[str, str]]:
     """Get chat history for a session.
 
     Args:
-        session_id: Session identifier
+        _session_id: Session identifier (unused in current implementation)
 
     Returns:
         List of messages in the chat history
@@ -225,4 +225,3 @@ async def get_chat_history(session_id: str) -> list[dict[str, str]]:
     # TODO: Implement actual history retrieval from database
     # For now, return empty list since messages are stored but not easily retrievable by session
     return []
-

@@ -43,6 +43,7 @@ async def main() -> None:
     )
 
     # Initialize context manager with session maker
+    assert database.async_session_maker is not None, "Database session maker not initialized"
     context_manager = ContextManager(database.async_session_maker, config.max_context_messages)
 
     command_handler = CommandHandler(context_manager, config.system_prompt)

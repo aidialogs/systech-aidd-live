@@ -8,7 +8,7 @@ def main() -> None:
     """Run API server with uvicorn."""
     # Load environment variables from .env file
     load_dotenv()
-    
+
     uvicorn.run(
         "src.api.main:app",
         host="0.0.0.0",
@@ -20,4 +20,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
