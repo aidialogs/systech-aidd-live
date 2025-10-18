@@ -45,11 +45,25 @@
 #   make clean              - очистка логов и временных файлов
 #   make dev                - запуск API и Frontend одновременно (full stack dev)
 #
+# Команды для Docker:
+#   make docker-up          - запуск всех сервисов через Docker Compose
+#   make docker-down        - остановка всех Docker сервисов
+#   make docker-build       - пересборка Docker образов (no cache)
+#   make docker-logs        - просмотр логов всех сервисов
+#   make docker-logs-bot    - просмотр логов Bot
+#   make docker-logs-api    - просмотр логов API
+#   make docker-logs-frontend - просмотр логов Frontend
+#   make docker-logs-db     - просмотр логов PostgreSQL
+#   make docker-ps          - показать статус всех сервисов
+#   make docker-restart     - перезапуск всех сервисов
+#   make docker-clean       - полная очистка (containers + volumes + images)
+#
 .PHONY: install run test test-cov test-all test-integration format lint check-all clean
 .PHONY: db-up db-down db-migrate db-rollback db-revision db-shell db-logs
 .PHONY: api-run api-test api-docs
 .PHONY: frontend-install frontend-dev frontend-build frontend-start frontend-lint frontend-lint-fix frontend-format frontend-format-check frontend-type-check frontend-check-all
 .PHONY: dev
+.PHONY: docker-up docker-down docker-build docker-logs docker-logs-bot docker-logs-api docker-logs-frontend docker-logs-db docker-ps docker-restart docker-clean
 
 install:
 	uv sync --extra dev
@@ -191,3 +205,48 @@ dev:
 	make api-run & \
 	make frontend-dev & \
 	wait
+
+# Docker commands
+docker-up:
+	@echo "Starting all services with Docker Compose..."
+	docker compose up -d
+
+docker-down:
+	@echo "Stopping all Docker services..."
+	docker compose down
+
+docker-build:
+	@echo "Building Docker images (no cache)..."
+	docker compose build --no-cache
+
+docker-logs:
+	@echo "Showing logs for all services..."
+	docker compose logs -f
+
+docker-logs-bot:
+	@echo "Showing logs for Bot service..."
+	docker compose logs -f bot
+
+docker-logs-api:
+	@echo "Showing logs for API service..."
+	docker compose logs -f api
+
+docker-logs-frontend:
+	@echo "Showing logs for Frontend service..."
+	docker compose logs -f frontend
+
+docker-logs-db:
+	@echo "Showing logs for PostgreSQL..."
+	docker compose logs -f postgres
+
+docker-ps:
+	@echo "Showing status of all services..."
+	docker compose ps
+
+docker-restart:
+	@echo "Restarting all services..."
+	docker compose restart
+
+docker-clean:
+	@echo "Cleaning up Docker (containers, volumes, images)..."
+	docker compose down -v --rmi all

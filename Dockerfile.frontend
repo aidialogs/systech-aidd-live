@@ -1,0 +1,32 @@
+# Dockerfile for Frontend (Next.js)
+# Simple single-stage build for MVP dev mode
+
+FROM node:20-slim
+
+WORKDIR /app
+
+# Enable pnpm
+RUN corepack enable pnpm
+
+# Copy dependency files
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy application code
+COPY frontend/src ./src/
+COPY frontend/public ./public/
+COPY frontend/next.config.mjs ./
+COPY frontend/tsconfig.json ./
+COPY frontend/postcss.config.mjs ./
+COPY frontend/components.json ./
+COPY frontend/next-env.d.ts ./
+COPY frontend/eslint.config.mjs ./
+
+# Expose frontend port
+EXPOSE 3000
+
+# Run development server
+CMD ["pnpm", "dev"]
+

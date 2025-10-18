@@ -196,6 +196,159 @@ make db-logs            # Посмотреть логи PostgreSQL
 
 Нажмите `Ctrl+C` в терминале.
 
+## 🐳 Запуск через Docker
+
+Самый простой способ запустить весь стек сервисов локально одной командой.
+
+### Требования
+
+- Docker Desktop (или Docker Engine + Docker Compose)
+- macOS: `brew install --cask docker`
+- Или скачайте с https://www.docker.com/products/docker-desktop
+
+### Быстрый старт с Docker
+
+**1. Создайте .env файл**
+
+Скопируйте пример конфигурации:
+```bash
+cp env.docker.example .env
+```
+
+Заполните обязательные переменные:
+- `BOT_TOKEN` - токен Telegram бота (получить через @BotFather)
+- `LLM_API_KEY` - API ключ OpenRouter
+- `LLM_BASE_URL` - URL провайдера LLM
+- `LLM_MODEL` - название модели
+
+**Важно:** В Docker окружении `DATABASE_URL` должен использовать хост `postgres` (уже настроено в `env.docker.example`):
+```bash
+DATABASE_URL=postgresql+asyncpg://systech_user:systech_password@postgres:5432/systech_aidd
+```
+
+**2. Запустите все сервисы**
+
+```bash
+make docker-up
+```
+
+Или напрямую через docker compose:
+```bash
+docker compose up
+```
+
+Это запустит все 4 сервиса:
+- **PostgreSQL** - база данных
+- **Bot** - Telegram бот
+- **API** - REST API сервер
+- **Frontend** - веб-интерфейс
+
+**3. Примените миграции БД (только при первом запуске)**
+
+```bash
+docker compose exec api uv run alembic upgrade head
+```
+
+**4. Проверьте работоспособность**
+
+- **API**: http://localhost:8000/docs - Swagger UI документация
+- **Frontend**: http://localhost:3000 - веб-интерфейс
+- **Bot**: отправьте сообщение боту в Telegram
+
+Проверить статус всех сервисов:
+```bash
+make docker-ps
+```
+
+**5. Просмотр логов**
+
+```bash
+# Все сервисы
+make docker-logs
+
+# Только Bot
+make docker-logs-bot
+
+# Только API
+make docker-logs-api
+
+# Только Frontend
+make docker-logs-frontend
+
+# Только PostgreSQL
+make docker-logs-db
+```
+
+**6. Остановка сервисов**
+
+```bash
+make docker-down
+```
+
+### Доступные Docker команды
+
+| Команда | Описание |
+|---------|----------|
+| `make docker-up` | Запуск всех сервисов (detached mode) |
+| `make docker-down` | Остановка всех сервисов |
+| `make docker-build` | Пересборка Docker образов (no cache) |
+| `make docker-logs` | Просмотр логов всех сервисов |
+| `make docker-logs-bot` | Просмотр логов Bot |
+| `make docker-logs-api` | Просмотр логов API |
+| `make docker-logs-frontend` | Просмотр логов Frontend |
+| `make docker-logs-db` | Просмотр логов PostgreSQL |
+| `make docker-ps` | Показать статус всех сервисов |
+| `make docker-restart` | Перезапуск всех сервисов |
+| `make docker-clean` | Полная очистка (containers + volumes + images) |
+
+### Структура сервисов
+
+```
+┌─────────────┐
+│  Frontend   │ :3000
+│  (Next.js)  │
+└──────┬──────┘
+       │
+       ↓
+┌─────────────┐     ┌─────────────┐
+│     API     │←────│     Bot     │
+│  (FastAPI)  │:8000│  (aiogram)  │
+└──────┬──────┘     └──────┬──────┘
+       │                   │
+       └───────┬───────────┘
+               ↓
+       ┌─────────────┐
+       │ PostgreSQL  │ :5432
+       └─────────────┘
+```
+
+### Полезные советы
+
+**Пересборка образов после изменений кода:**
+```bash
+make docker-build
+make docker-up
+```
+
+**Просмотр логов в реальном времени:**
+```bash
+docker compose logs -f api bot
+```
+
+**Подключение к PostgreSQL:**
+```bash
+docker compose exec postgres psql -U systech_user -d systech_aidd
+```
+
+**Выполнение команд внутри контейнера:**
+```bash
+# Запуск тестов в API контейнере
+docker compose exec api uv run pytest
+
+# Проверка версии Python
+docker compose exec bot python --version
+```
+
 ## 📚 Руководства для разработчиков
 
 Для полного понимания проекта создан набор подробных гайдов:
@@ -392,6 +545,48 @@ make frontend-check-all      # All checks
 
 See [frontend/README.md](frontend/README.md) for details.
 
+## 🔧 DevOps & Infrastructure
+
+DevOps infrastructure for containerization, CI/CD, and automated deployment.
+
+### Quick Links
+
+- 📋 [DevOps Roadmap](devops/doc/devops-roadmap.md) - development roadmap for DevOps processes
+- 🐳 **Docker containerization** - ✅ **Готово!** Запуск всех сервисов: `make docker-up`
+- 📝 [Docker Setup Summary](DOCKER-SETUP-SUMMARY.md) - краткое руководство по Docker
+- 🔄 GitHub Actions - automated build and deployment pipelines (планируется в D1)
+- 🚀 Auto Deploy - one-click deployment to production server (планируется в D3)
+
+### Current Status
+
+**Sprint D0: Basic Docker Setup** - ✅ Выполнен
+
+- Созданы Dockerfile для всех сервисов (bot, api, frontend)
+- Настроен docker-compose.yml для оркестрации
+- Добавлены удобные команды в Makefile
+- Обновлена документация с инструкциями
+
+**Следующий шаг:** Sprint D1 - Build & Publish (GitHub Actions + Container Registry)
+
+См. [DevOps Roadmap](devops/doc/devops-roadmap.md) для детального плана.
+
+### Services Architecture
+
+```
+Frontend (Next.js + pnpm) :3000
+    ↓
+API (FastAPI + UV) :8000 ← Bot (Python + UV + aiogram)
+    ↓
+PostgreSQL :5432
+```
+
+**Все сервисы в Docker:**
+- ✅ Запуск одной командой: `make docker-up`
+- ✅ Логи: `make docker-logs`
+- ✅ Статус: `make docker-ps`
+
+См. [DOCKER-SETUP-SUMMARY.md](DOCKER-SETUP-SUMMARY.md) для быстрого старта.
+
 ## Структура проекта
 
 ```
@@ -435,6 +630,11 @@ systech-aidd-live/
 │       ├── frontend-roadmap.md  # Roadmap frontend
 │       └── plans/
 │           └── s1-mock-api-plan.md  # План Sprint S1
+├── devops/                # DevOps инфраструктура
+│   ├── README.md          # DevOps документация
+│   └── doc/
+│       ├── devops-roadmap.md  # Roadmap DevOps процессов
+│       └── plans/         # Планы спринтов
 ├── .env                   # Конфигурация (не в git)
 ├── .env.example           # Пример конфигурации
 ├── pyproject.toml         # Зависимости + конфигурация инструментов
