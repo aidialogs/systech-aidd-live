@@ -6,11 +6,13 @@ on:
     branches:
       - main
       - day6-ci-draft
+      - day6-ci-test
   
   # Сборка и публикация при push в тестовую ветку
   push:
     branches:
       - day6-ci-draft
+      - day6-ci-test
 
 # Разрешения для публикации в GitHub Container Registry
 permissions:
@@ -18,7 +20,102 @@ permissions:
   packages: write
 
 jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        check:
+          - name: python-tests
+            run: uv run pytest tests/ -v -m "not integration"
+          - name: python-lint
+            run: uv run ruff check src/ tests/
+          - name: python-types
+            run: uv run mypy src/ tests/
+          - name: frontend-lint
+            run: cd frontend && pnpm lint
+          - name: frontend-types
+            run: cd frontend && pnpm type-check
+          - name: frontend-format
+            run: cd frontend && pnpm format:check
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Python setup (only for python-* checks)
+      - name: Set up Python
+        if: startsWith(matrix.check.name, 'python-')
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        if: startsWith(matrix.check.name, 'python-')
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      
+      - name: Add uv to PATH
+        if: startsWith(matrix.check.name, 'python-')
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Cache uv dependencies
+        if: startsWith(matrix.check.name, 'python-')
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+      
+      - name: Install Python dependencies
+        if: startsWith(matrix.check.name, 'python-')
+        run: uv sync --extra dev
+      
+      # Node.js setup (only for frontend-* checks)
+      - name: Set up Node.js
+        if: startsWith(matrix.check.name, 'frontend-')
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        if: startsWith(matrix.check.name, 'frontend-')
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      
+      - name: Cache pnpm store
+        if: startsWith(matrix.check.name, 'frontend-')
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+      
+      - name: Install frontend dependencies
+        if: startsWith(matrix.check.name, 'frontend-')
+        run: cd frontend && pnpm install
+      
+      # Run the check
+      - name: Run ${{ matrix.check.name }}
+        run: ${{ matrix.check.run }}
+      
+      # Generate summary
+      - name: Check summary
+        if: always()
+        run: |
+          echo "### ✅ Quality Check: ${{ matrix.check.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ $? -eq 0 ]; then
+            echo "**Status:** ✅ Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** ❌ Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "**Command:** \`${{ matrix.check.run }}\`" >> $GITHUB_STEP_SUMMARY
+
   build-and-push:
+    needs: [test-and-lint]
     runs-on: ubuntu-latest
     
     strategy:
