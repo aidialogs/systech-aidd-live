@@ -1,0 +1,31 @@
+# Dockerfile для FastAPI сервиса
+# Простой образ для быстрого старта (MVP)
+
+FROM python:3.11-slim
+
+# Установка uv для управления зависимостями
+RUN pip install --no-cache-dir uv
+
+# Рабочая директория
+WORKDIR /app
+
+# Копирование файлов зависимостей
+COPY pyproject.toml uv.lock ./
+
+# Установка зависимостей
+RUN uv sync --frozen
+
+# Копирование исходного кода
+COPY src/ ./src/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+
+# Создание директории для логов
+RUN mkdir -p logs
+
+# Expose порт API
+EXPOSE 8000
+
+# Запуск API сервера
+CMD ["uv", "run", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+

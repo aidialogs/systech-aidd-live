@@ -1,0 +1,29 @@
+# Dockerfile для Telegram Bot сервиса
+# Простой образ для быстрого старта (MVP)
+
+FROM python:3.11-slim
+
+# Установка uv для управления зависимостями
+RUN pip install --no-cache-dir uv
+
+# Рабочая директория
+WORKDIR /app
+
+# Копирование файлов зависимостей
+COPY pyproject.toml uv.lock ./
+
+# Установка зависимостей
+RUN uv sync --frozen
+
+# Копирование исходного кода
+COPY src/ ./src/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+COPY prompts/ ./prompts/
+
+# Создание директории для логов
+RUN mkdir -p logs
+
+# Запуск миграций и бота
+CMD ["sh", "-c", "uv run alembic upgrade head && uv run python -m src.main"]
+

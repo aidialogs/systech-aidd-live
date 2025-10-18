@@ -1,0 +1,26 @@
+# Dockerfile для Next.js Frontend
+# Простой образ для быстрого старта (MVP)
+
+FROM node:20-slim
+
+# Установка pnpm
+RUN npm install -g pnpm
+
+# Рабочая директория
+WORKDIR /app
+
+# Копирование файлов зависимостей
+COPY package.json pnpm-lock.yaml ./
+
+# Установка зависимостей
+RUN pnpm install
+
+# Копирование всех файлов проекта
+COPY . .
+
+# Expose порт для Next.js dev server
+EXPOSE 3000
+
+# Запуск dev сервера
+CMD ["pnpm", "dev"]
+

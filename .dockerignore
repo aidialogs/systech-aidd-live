@@ -1,0 +1,65 @@
+# Python .dockerignore для оптимизации сборки образов
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/*
+!logs/.gitkeep
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation and tests
+doc/
+tests/
+*.md
+
+# Frontend
+node_modules/
+frontend/
+
+# DevOps files (keep only what's needed for builds)
+devops/doc/
+devops/plans/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Plan files
+*.plan.md
+

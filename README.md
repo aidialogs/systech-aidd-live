@@ -112,6 +112,51 @@ make run
 uv run python -m src.main
 ```
 
+## 🐳 Запуск через Docker (рекомендуется)
+
+**Самый простой способ запустить весь проект локально одной командой!**
+
+Docker автоматически запустит все необходимые сервисы:
+- PostgreSQL база данных
+- Telegram бот
+- FastAPI сервер
+- Next.js frontend
+
+### Требования
+
+- Docker 20.10+ и Docker Compose 2.0+
+- Около 2 GB свободного места
+
+### Быстрый запуск
+
+```bash
+# 1. Создайте файл .env из шаблона
+cp devops/env.example .env
+
+# 2. Отредактируйте .env и заполните BOT_TOKEN, LLM_API_KEY и другие переменные
+nano .env
+
+# 3. Запустите все сервисы
+cd devops
+docker compose up
+```
+
+Готово! 🎉
+
+- **Frontend**: http://localhost:3000
+- **API**: http://localhost:8000/docs
+- **Bot**: работает в Telegram
+
+### Подробная документация
+
+Полный гайд по Docker см. в [devops/doc/DOCKER_QUICKSTART.md](devops/doc/DOCKER_QUICKSTART.md)
+
+---
+
+## Локальная разработка (без Docker)
+
+Если вы хотите запустить проект локально для разработки без Docker:
+
 ### 4. База данных
 
 Проект использует PostgreSQL для персистентного хранения истории диалогов.
