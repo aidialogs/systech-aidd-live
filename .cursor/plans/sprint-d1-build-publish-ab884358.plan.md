@@ -22,30 +22,30 @@
 Создать краткую инструкцию, включающую:
 
 - **Основы GitHub Actions:**
-                - Что такое workflow, jobs, steps
-                - Синтаксис YAML для workflow файлов
-                - Где хранятся workflows (`.github/workflows/`)
+                                                                - Что такое workflow, jobs, steps
+                                                                - Синтаксис YAML для workflow файлов
+                                                                - Где хранятся workflows (`.github/workflows/`)
 
 - **Триггеры (triggers):**
-                - `push` - автоматический запуск при push в ветку
-                - `pull_request` - запуск при создании/обновлении PR
-                - `workflow_dispatch` - ручной запуск через UI
-                - Фильтры по веткам и путям
+                                                                - `push` - автоматический запуск при push в ветку
+                                                                - `pull_request` - запуск при создании/обновлении PR
+                                                                - `workflow_dispatch` - ручной запуск через UI
+                                                                - Фильтры по веткам и путям
 
 - **Работа с Pull Requests:**
-                - Как создать PR из feature-ветки
-                - Автоматическая проверка сборки образов в PR
-                - Merge только после успешного прохождения CI
+                                                                - Как создать PR из feature-ветки
+                                                                - Автоматическая проверка сборки образов в PR
+                                                                - Merge только после успешного прохождения CI
 
 - **GitHub Container Registry (ghcr.io):**
-                - Что такое ghcr.io и как он работает
-                - Public vs Private образы
-                - Автоматическая авторизация через GITHUB_TOKEN
-                - Формат образов: `ghcr.io/OWNER/IMAGE:TAG`
+                                                                - Что такое ghcr.io и как он работает
+                                                                - Public vs Private образы
+                                                                - Автоматическая авторизация через GITHUB_TOKEN
+                                                                - Формат образов: `ghcr.io/OWNER/IMAGE:TAG`
 
 - **Секреты и токены:**
-                - GITHUB_TOKEN - встроенный токен с правами на запись в ghcr.io
-                - Permissions для workflow (packages: write, contents: read)
+                                                                - GITHUB_TOKEN - встроенный токен с правами на запись в ghcr.io
+                                                                - Permissions для workflow (packages: write, contents: read)
 
 ### 2. GitHub Actions Workflow
 
@@ -97,9 +97,9 @@ jobs:
 4. **Extract metadata** - `docker/metadata-action@v5` для генерации тегов
 5. **Build and push** - `docker/build-push-action@v5` с:
 
-                        - Кэширование layers через `cache-from` и `cache-to`
-                        - Теги: `latest` и `sha-<commit>`
-                        - Push только при push в ветку (не в PR)
+                                                                                                - Кэширование layers через `cache-from` и `cache-to`
+                                                                                                - Теги: `latest` и `sha-<commit>`
+                                                                                                - Push только при push в ветку (не в PR)
 
 **Оптимизации:**
 
@@ -115,8 +115,8 @@ jobs:
 2. Найти созданные образы (systech-aidd-bot, systech-aidd-api, systech-aidd-frontend)
 3. Для каждого образа:
 
-                        - Package settings → Change visibility → Public
-                        - Убрать требование авторизации для pull
+                                                                                                - Package settings → Change visibility → Public
+                                                                                                - Убрать требование авторизации для pull
 
 **Документация:** Добавить пошаговую инструкцию в `/devops/doc/guides/github-actions-intro.md`
 
@@ -260,21 +260,21 @@ docker compose -f docker-compose.prod.yml exec api uv run alembic upgrade head
 
 1. **Локальная проверка workflow:**
 
-                        - Push в ветку `day06-smirnov-live-02-ci-pipeline`
-                        - Проверить запуск workflow в GitHub Actions UI
-                        - Убедиться что все 3 образа собираются параллельно
-                        - Проверить успешную публикацию в ghcr.io
+                                                                                                - Push в ветку `day06-smirnov-live-02-ci-pipeline`
+                                                                                                - Проверить запуск workflow в GitHub Actions UI
+                                                                                                - Убедиться что все 3 образа собираются параллельно
+                                                                                                - Проверить успешную публикацию в ghcr.io
 
 2. **Проверка PR:**
 
-                        - Создать тестовый PR
-                        - Убедиться что workflow запускается
-                        - Проверить что образы собираются, но не публикуются (только в PR)
+                                                                                                - Создать тестовый PR
+                                                                                                - Убедиться что workflow запускается
+                                                                                                - Проверить что образы собираются, но не публикуются (только в PR)
 
 3. **Настройка публичного доступа:**
 
-                        - Сделать все 3 образа публичными через GitHub UI
-                        - Проверить доступность без авторизации
+                                                                                                - Сделать все 3 образа публичными через GitHub UI
+                                                                                                - Проверить доступность без авторизации
 
 4. **Локальное использование образов:**
    ```bash
@@ -288,8 +288,8 @@ docker compose -f docker-compose.prod.yml exec api uv run alembic upgrade head
 
 5. **Проверка тегов:**
 
-                        - Убедиться что образы имеют теги `latest` и `sha-<commit>`
-                        - Проверить возможность pull конкретной версии по SHA
+                                                                                                - Убедиться что образы имеют теги `latest` и `sha-<commit>`
+                                                                                                - Проверить возможность pull конкретной версии по SHA
 
 ## MVP ограничения
 
