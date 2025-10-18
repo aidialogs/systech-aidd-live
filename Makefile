@@ -7,6 +7,7 @@
 .PHONY: api-run api-docs api-test
 .PHONY: frontend-install frontend-dev frontend-build frontend-start frontend-lint frontend-format frontend-type-check frontend-check-all
 .PHONY: docker-build docker-up docker-down docker-logs docker-ps docker-clean docker-dev docker-lint docker-scan docker-restart
+.PHONY: ci-lint-backend ci-lint-frontend ci-test ci-build ci-check-all
 
 # Default target
 .DEFAULT_GOAL := help
@@ -69,6 +70,13 @@ help: ## Показать это сообщение с помощью
 	@echo "  make docker-clean       - удаление контейнеров и volumes"
 	@echo "  make docker-lint        - проверка Dockerfile (Hadolint)"
 	@echo "  make docker-scan        - сканирование безопасности (Trivy)"
+	@echo ""
+	@echo "CI/CD (локальное воспроизведение):"
+	@echo "  make ci-lint-backend    - lint backend как в CI"
+	@echo "  make ci-lint-frontend   - lint frontend как в CI"
+	@echo "  make ci-test            - тесты как в CI"
+	@echo "  make ci-build           - сборка образов как в CI"
+	@echo "  make ci-check-all       - полная CI проверка локально"
 	@echo ""
 	@echo "Утилиты:"
 	@echo "  make clean              - очистка временных файлов"
@@ -220,3 +228,53 @@ docker-scan:
 	@docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image systech-aidd-live-frontend:latest || true
 	@echo ""
 	@echo "Trivy сканирование завершено"
+
+# CI/CD local reproduction commands
+ci-lint-backend:
+	@echo "==> Running backend lint (как в CI)..."
+	uv run ruff check src/ tests/
+	uv run ruff format --check src/ tests/
+	uv run mypy src/ tests/
+	@echo "✅ Backend lint passed"
+
+ci-lint-frontend:
+	@echo "==> Running frontend lint (как в CI)..."
+	cd frontend && $(WITH_NVM) pnpm lint
+	cd frontend && $(WITH_NVM) pnpm type-check
+	cd frontend && $(WITH_NVM) pnpm format:check
+	@echo "✅ Frontend lint passed"
+
+ci-test:
+	@echo "==> Running tests (как в CI)..."
+	uv run pytest -m "not integration" --cov=src --cov-report=term
+	@echo "✅ Tests passed"
+
+ci-build:
+	@echo "==> Building Docker images (как в CI)..."
+	@echo "Building bot image..."
+	docker build -f devops/Dockerfile.bot -t systech-aidd-bot:local .
+	@echo "Building api image..."
+	docker build -f devops/Dockerfile.api -t systech-aidd-api:local .
+	@echo "Building frontend image..."
+	docker build -f devops/Dockerfile.frontend -t systech-aidd-frontend:local .
+	@echo "✅ All images built successfully"
+	@echo ""
+	@echo "Built images:"
+	@docker images | grep systech-aidd
+
+ci-check-all:
+	@echo "========================================"
+	@echo "🚀 Running full CI check locally"
+	@echo "========================================"
+	@echo ""
+	$(MAKE) ci-lint-backend
+	@echo ""
+	$(MAKE) ci-lint-frontend
+	@echo ""
+	$(MAKE) ci-test
+	@echo ""
+	$(MAKE) ci-build
+	@echo ""
+	@echo "========================================"
+	@echo "✅ All CI checks passed!"
+	@echo "========================================"

@@ -4,6 +4,16 @@ AI-powered Telegram chatbot с управлением контекстом ди�
 
 ![Пример работы бота](doc/day01-preview.png)
 
+## 🚀 CI/CD Status
+
+[![CI Pipeline](https://github.com/YOUR_USERNAME/systech-aidd-live/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/systech-aidd-live/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/YOUR_USERNAME/systech-aidd-live/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/systech-aidd-live)
+
+**Docker Images:**
+- [`ghcr.io/YOUR_USERNAME/systech-aidd-live-bot`](https://github.com/YOUR_USERNAME/systech-aidd-live/pkgs/container/systech-aidd-live-bot)
+- [`ghcr.io/YOUR_USERNAME/systech-aidd-live-api`](https://github.com/YOUR_USERNAME/systech-aidd-live/pkgs/container/systech-aidd-live-api)
+- [`ghcr.io/YOUR_USERNAME/systech-aidd-live-frontend`](https://github.com/YOUR_USERNAME/systech-aidd-live/pkgs/container/systech-aidd-live-frontend)
+
 ## 🎯 Описание
 
 Telegram-бот с искусственным интеллектом, который помнит контекст разговора и может вести осмысленный диалог. Построен по принципу KISS (Keep It Simple, Stupid) - простой, понятный и эффективный код без оверинжиниринга.
@@ -333,6 +343,7 @@ docker builder prune
 - **[GUIDE-07: Development Workflow](doc/guides/07-development-workflow.md)** — процесс разработки
 - **[GUIDE-08: Testing](doc/guides/08-testing.md)** — стратегия тестирования
 - **[GUIDE-09: Docker Deployment](doc/guides/09-docker-deployment.md)** — Docker контейнеризация и деплой
+- **[GUIDE-10: CI/CD Pipeline](doc/guides/10-ci-cd-guide.md)** — автоматизация проверок и деплоя
 
 **➡️ [Полный список гайдов](doc/guides/README.md)**
 
@@ -412,6 +423,13 @@ make test
 - `make format` - автоформатирование кода (ruff format)
 - `make lint` - проверка кода (ruff check + mypy)
 - `make check-all` - полная проверка (format + lint + test-cov)
+
+**CI/CD (локальное воспроизведение):**
+- `make ci-lint-backend` - lint backend как в CI
+- `make ci-lint-frontend` - lint frontend как в CI
+- `make ci-test` - тесты как в CI
+- `make ci-build` - сборка образов как в CI
+- `make ci-check-all` - полная CI проверка локально
 
 **Утилиты:**
 - `make clean` - очистка логов и отчетов coverage
