@@ -54,8 +54,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.frontend
+      context: .
+      dockerfile: frontend/Dockerfile.frontend
     container_name: systech-aidd-frontend
     command: ["pnpm", "dev"]
     environment:
