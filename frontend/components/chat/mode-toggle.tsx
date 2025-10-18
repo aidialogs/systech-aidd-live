@@ -41,4 +41,3 @@ export function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
     </div>
   );
 }
-

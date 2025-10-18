@@ -30,9 +30,7 @@ export function StatsCard({ title, value, trend }: StatsCardProps) {
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <div className="flex items-center gap-1">
           {getTrendIcon()}
-          <span className={`text-xs font-medium ${getTrendColor()}`}>
-            {formatTrend(trend)}
-          </span>
+          <span className={`text-xs font-medium ${getTrendColor()}`}>{formatTrend(trend)}</span>
         </div>
       </CardHeader>
       <CardContent>
@@ -41,4 +39,3 @@ export function StatsCard({ title, value, trend }: StatsCardProps) {
     </Card>
   );
 }
-

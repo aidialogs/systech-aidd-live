@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,14 +13,13 @@ logger = logging.getLogger(__name__)
 class QueryExecutionError(Exception):
     """Exception raised when query execution fails."""
 
-    pass
 
 
 class QueryExecutor:
     """Safe SQL query executor with validation."""
 
     # Keywords that are not allowed in queries
-    FORBIDDEN_KEYWORDS = [
+    FORBIDDEN_KEYWORDS: ClassVar[list[str]] = [
         "DROP",
         "DELETE",
         "UPDATE",
@@ -103,7 +102,7 @@ class QueryExecutor:
             columns = list(result.keys()) if rows else []
 
             # Convert rows to list of dicts
-            rows_as_dicts = [dict(zip(columns, row)) for row in rows]
+            rows_as_dicts = [dict(zip(columns, row, strict=False)) for row in rows]
 
             logger.info(
                 f"Query executed successfully: {len(rows_as_dicts)} rows returned, "

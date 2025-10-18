@@ -22,11 +22,10 @@ class MockStatCollector:
         """
         if period_days == 7:
             return self._get_stats_7d()
-        elif period_days == 30:
+        if period_days == 30:
             return self._get_stats_30d()
-        else:
-            # Default to 7 days
-            return self._get_stats_7d()
+        # Default to 7 days
+        return self._get_stats_7d()
 
     def _get_stats_7d(self) -> dict[str, Any]:
         """Get statistics for last 7 days."""

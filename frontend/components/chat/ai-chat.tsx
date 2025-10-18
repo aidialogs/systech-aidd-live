@@ -92,10 +92,7 @@ export function AIChat({ className, onClose }: AIChatProps) {
 
   return (
     <div
-      className={cn(
-        "relative w-[360px] h-[460px] rounded-2xl overflow-hidden p-[2px]",
-        className
-      )}
+      className={cn("relative w-[360px] h-[460px] rounded-2xl overflow-hidden p-[2px]", className)}
     >
       {/* Animated Outer Border */}
       <motion.div
@@ -141,16 +138,15 @@ export function AIChat({ className, onClose }: AIChatProps) {
             <div
               className={cn(
                 "text-xs px-2 py-0.5 rounded-full",
-                mode === "admin" ? "bg-purple-500/20 text-purple-300" : "bg-blue-500/20 text-blue-300"
+                mode === "admin"
+                  ? "bg-purple-500/20 text-purple-300"
+                  : "bg-blue-500/20 text-blue-300"
               )}
             >
               {mode}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg hover:bg-white/10 transition-colors"
-          >
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/10 transition-colors">
             <X className="w-4 h-4 text-white" />
           </button>
         </div>
@@ -194,4 +190,3 @@ export function AIChat({ className, onClose }: AIChatProps) {
     </div>
   );
 }
-

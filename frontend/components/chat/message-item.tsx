@@ -34,12 +34,9 @@ export function MessageItem({ message, showSqlQuery }: MessageItemProps) {
       {showSqlQuery && message.sql_query && (
         <div className="mt-2 pt-2 border-t border-white/20">
           <div className="text-xs text-white/60 mb-1">SQL Query:</div>
-          <pre className="text-xs bg-black/30 p-2 rounded overflow-x-auto">
-            {message.sql_query}
-          </pre>
+          <pre className="text-xs bg-black/30 p-2 rounded overflow-x-auto">{message.sql_query}</pre>
         </div>
       )}
     </motion.div>
   );
 }
-

@@ -136,9 +136,8 @@ class AdminChatHandler:
         # Clean up response (remove markdown, extra whitespace)
         sql_query = response.strip()
         sql_query = sql_query.replace("```sql", "").replace("```", "")
-        sql_query = sql_query.strip()
+        return sql_query.strip()
 
-        return sql_query
 
     async def _generate_answer(self, question: str, query_results: str) -> str:
         """Generate natural language answer from query results.

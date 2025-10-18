@@ -1,8 +1,10 @@
 """FastAPI application for statistics and chat API."""
 
 import logging
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from enum import Enum
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -62,7 +64,7 @@ session_factory_global = None
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifespan context manager for FastAPI app."""
     global chat_service, session_factory_global
 
@@ -129,7 +131,9 @@ async def root() -> dict[str, str]:
 
 
 @app.get("/api/stats")
-async def get_stats(period: Period = Query(Period.SEVEN_DAYS, description="Период статистики")):
+async def get_stats(
+    period: Period = Query(Period.SEVEN_DAYS, description="Период статистики"),
+) -> dict[str, Any]:
     """Получить статистику за указанный период.
 
     Args:
@@ -178,7 +182,7 @@ async def send_chat_message(request: SendMessageRequest) -> ChatResponse:
                 session_id=request.session_id,
             )
 
-        elif request.mode == ChatMode.ADMIN:
+        if request.mode == ChatMode.ADMIN:
             # Admin mode: text2sql analytics
             # Create a new query executor for this request
             async with session_factory_global() as session:
@@ -197,15 +201,15 @@ async def send_chat_message(request: SendMessageRequest) -> ChatResponse:
 
     except LLMError as e:
         logging.error(f"LLM error: {e!s}")
-        raise HTTPException(status_code=500, detail="Failed to get LLM response")
+        raise HTTPException(status_code=500, detail="Failed to get LLM response") from e
 
     except QueryExecutionError as e:
         logging.error(f"Query execution error: {e!s}")
-        raise HTTPException(status_code=400, detail=f"Query execution failed: {e!s}")
+        raise HTTPException(status_code=400, detail=f"Query execution failed: {e!s}") from e
 
     except Exception as e:
         logging.error(f"Unexpected error: {e!s}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @app.get("/api/chat/history/{session_id}")
