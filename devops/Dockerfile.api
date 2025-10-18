@@ -1,0 +1,70 @@
+# Stage 1: Builder - установка зависимостей
+FROM python:3.11-slim AS builder
+
+# Установка UV для быстрого управления зависимостями
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Настройка рабочей директории
+WORKDIR /app
+
+# Копирование файлов с описанием зависимостей
+COPY pyproject.toml uv.lock ./
+
+# Установка зависимостей в виртуальное окружение
+# --no-dev исключает dev-зависимости для production
+RUN uv sync --frozen --no-dev
+
+# Stage 2: Runtime - минимальный production образ
+FROM python:3.11-slim
+
+# Установка curl для health checks и минимальных системных зависимостей
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создание non-root пользователя для безопасности
+RUN groupadd -r appuser && \
+    useradd -r -g appuser -u 1001 appuser
+
+# Настройка рабочей директории
+WORKDIR /app
+
+# Копирование виртуального окружения из builder stage
+COPY --from=builder /app/.venv /app/.venv
+
+# Копирование исходного кода приложения
+COPY src/ /app/src/
+COPY alembic/ /app/alembic/
+COPY alembic.ini /app/alembic.ini
+COPY prompts/ /app/prompts/
+
+# Создание директории для логов
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app
+
+# Переключение на non-root пользователя
+USER appuser
+
+# Настройка PATH для использования venv
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+
+# Настройка Uvicorn для production (можно переопределить через env)
+ENV UVICORN_HOST="0.0.0.0"
+ENV UVICORN_PORT="8000"
+ENV UVICORN_WORKERS="1"
+
+# Expose порт для API
+EXPOSE 8000
+
+# Health check: проверка /health endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Точка входа: запуск FastAPI через Uvicorn
+CMD uvicorn src.api.main:app \
+    --host ${UVICORN_HOST} \
+    --port ${UVICORN_PORT} \
+    --workers ${UVICORN_WORKERS}
+

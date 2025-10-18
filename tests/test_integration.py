@@ -1,27 +1,33 @@
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from src.context_manager import ContextManager
 from src.message import Message
 
 
-def test_context_trimming_with_many_messages() -> None:
+@pytest.mark.asyncio
+async def test_context_trimming_with_many_messages(
+    async_session_maker: async_sessionmaker[AsyncSession],
+) -> None:
     """Тест обрезки контекста при большом количестве сообщений"""
-    cm = ContextManager(max_context_messages=20)
+    cm = ContextManager(async_session_maker, max_context_messages=20)
 
     user_id = 999
     chat_id = 888
 
     # Добавить system prompt
     system_msg = Message("system", "Ты полезный AI-ассистент")
-    cm.add_message(user_id, chat_id, system_msg)
+    await cm.add_message(user_id, chat_id, system_msg)
 
     # Добавить 30 пар сообщений (60 сообщений + 1 system = 61 всего)
     for i in range(30):
         user_msg = Message("user", f"Вопрос номер {i}")
         assistant_msg = Message("assistant", f"Ответ номер {i}")
-        cm.add_message(user_id, chat_id, user_msg)
-        cm.add_message(user_id, chat_id, assistant_msg)
+        await cm.add_message(user_id, chat_id, user_msg)
+        await cm.add_message(user_id, chat_id, assistant_msg)
 
     # Получить контекст
-    context = cm.get_context(user_id, chat_id)
+    context = await cm.get_context(user_id, chat_id)
 
     # Проверка что контекст обрезан до 20 сообщений
     assert len(context) == 20, f"Ожидалось 20 сообщений, получено {len(context)}"

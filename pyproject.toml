@@ -7,6 +7,11 @@ dependencies = [
     "aiogram>=3.0",
     "openai",
     "python-dotenv",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "alembic>=1.12",
+    "fastapi>=0.104",
+    "uvicorn[standard]>=0.24",
 ]
 
 [project.optional-dependencies]
@@ -17,6 +22,7 @@ dev = [
     "mypy>=1.7",
     "pytest-cov>=4.1",
     "pytest-mock>=3.12",
+    "aiosqlite>=0.19",
 ]
 
 [build-system]

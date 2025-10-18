@@ -1,0 +1,58 @@
+# Stage 1: Builder - установка зависимостей
+FROM python:3.11-slim AS builder
+
+# Установка UV для быстрого управления зависимостями
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Настройка рабочей директории
+WORKDIR /app
+
+# Копирование файлов с описанием зависимостей
+COPY pyproject.toml uv.lock ./
+
+# Установка зависимостей в виртуальное окружение
+# --no-dev исключает dev-зависимости для production
+RUN uv sync --frozen --no-dev
+
+# Stage 2: Runtime - минимальный production образ
+FROM python:3.11-slim
+
+# Установка минимальных системных зависимостей
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создание non-root пользователя для безопасности
+RUN groupadd -r appuser && \
+    useradd -r -g appuser -u 1001 appuser
+
+# Настройка рабочей директории
+WORKDIR /app
+
+# Копирование виртуального окружения из builder stage
+COPY --from=builder /app/.venv /app/.venv
+
+# Копирование исходного кода приложения
+COPY src/ /app/src/
+COPY alembic/ /app/alembic/
+COPY alembic.ini /app/alembic.ini
+COPY prompts/ /app/prompts/
+
+# Создание директории для логов
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app
+
+# Переключение на non-root пользователя
+USER appuser
+
+# Настройка PATH для использования venv
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+
+# Health check: проверка существования процесса Python
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep -f "python -m src.main" || exit 1
+
+# Точка входа: запуск Telegram бота
+CMD ["python", "-m", "src.main"]
+

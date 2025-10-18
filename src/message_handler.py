@@ -32,26 +32,26 @@ class MessageHandler:
         logging.info(f'Message from user_id={user_id} chat_id={chat_id}: "{text}"')
 
         # Сначала проверяем команды
-        command_response = self.command_handler.handle_command(text, user_id, chat_id)
+        command_response = await self.command_handler.handle_command(text, user_id, chat_id)
         if command_response:
             return command_response
 
         # Если не команда - обрабатываем как обычное сообщение
         try:
             # Получить контекст
-            context = self.context_manager.get_context(user_id, chat_id)
+            context = await self.context_manager.get_context(user_id, chat_id)
 
             # Добавить system prompt если контекст пустой
             if not context:
                 system_message = Message("system", self.system_prompt)
-                self.context_manager.add_message(user_id, chat_id, system_message)
+                await self.context_manager.add_message(user_id, chat_id, system_message)
 
             # Добавить user message в контекст
             user_message = Message("user", text)
-            self.context_manager.add_message(user_id, chat_id, user_message)
+            await self.context_manager.add_message(user_id, chat_id, user_message)
 
             # Получить обновленный контекст для отправки в LLM
-            context = self.context_manager.get_context(user_id, chat_id)
+            context = await self.context_manager.get_context(user_id, chat_id)
 
             # Логировать размер контекста
             logging.info(f"Sending to LLM: context_size={len(context)}")
@@ -61,7 +61,7 @@ class MessageHandler:
 
             # Добавить assistant message в контекст
             assistant_message = Message("assistant", response)
-            self.context_manager.add_message(user_id, chat_id, assistant_message)
+            await self.context_manager.add_message(user_id, chat_id, assistant_message)
 
             return response
 
