@@ -1,0 +1,208 @@
+# Docker Compose конфигурация для Production развертывания
+# systech-aidd-live
+#
+# Использует предсобранные образы из GitHub Container Registry (ghcr.io)
+# Оптимизирован для production: безопасность, надежность, мониторинг
+#
+# Использование:
+#   docker compose -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.prod.yml up -d
+#
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: systech-aidd-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-systech_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-systech_aidd}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    # ⚠️ ВАЖНО: Порты НЕ публикуются наружу в production (только внутри Docker сети)
+    # PostgreSQL доступен только для bot/api сервисов
+    # Если нужен внешний доступ для администрирования - используйте SSH туннель
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-systech_user} -d ${POSTGRES_DB:-systech_aidd}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: always
+    networks:
+      - systech-network
+    # Ограничение ресурсов (опционально)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Telegram Bot Service
+  bot:
+    image: ghcr.io/aidialogs/systech-aidd-live/bot:latest
+    container_name: systech-aidd-bot
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SYSTEM_PROMPT_FILE: /app/prompts/system_prompt.txt
+      BOT_TOKEN: ${BOT_TOKEN}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_BASE_URL: ${LLM_BASE_URL}
+      LLM_MODEL: ${LLM_MODEL}
+      MAX_CONTEXT_MESSAGES: ${MAX_CONTEXT_MESSAGES:-20}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - bot_logs:/app/logs
+    restart: always
+    networks:
+      - systech-network
+    # Ограничение ресурсов (опционально)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # FastAPI Service
+  api:
+    image: ghcr.io/aidialogs/systech-aidd-live/api:latest
+    container_name: systech-aidd-api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_ECHO: ${DATABASE_ECHO:-False}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - api_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: always
+    networks:
+      - systech-network
+    # Ограничение ресурсов (опционально)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Next.js Frontend Service
+  frontend:
+    image: ghcr.io/aidialogs/systech-aidd-live/frontend:latest
+    container_name: systech-aidd-frontend
+    environment:
+      # ⚠️ ВАЖНО: Используйте публичный IP или домен сервера
+      # Это URL для браузера пользователя, не внутренний Docker адрес
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: always
+    networks:
+      - systech-network
+    # Ограничение ресурсов (опционально)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  postgres_data:
+    driver: local
+  bot_logs:
+    driver: local
+  api_logs:
+    driver: local
+
+networks:
+  systech-network:
+    driver: bridge
+
+# ============================================
+# Production Notes
+# ============================================
+#
+# 1. Образы:
+#    - Используются публичные образы из ghcr.io/aidialogs/systech-aidd-live
+#    - Тег :latest всегда указывает на последнюю собранную версию
+#    - Для фиксации версии используйте SHA теги (например :sha-abc1234)
+#
+# 2. Безопасность:
+#    - PostgreSQL НЕ доступен извне (нет ports)
+#    - Все секреты в .env файле (chmod 600)
+#    - restart: always - автоматический перезапуск при сбое
+#
+# 3. Мониторинг:
+#    - Health checks для postgres, api, frontend
+#    - Логи в volumes (доступны через docker logs)
+#
+# 4. Ресурсы:
+#    - Limits/reservations настроены консервативно (512M/256M)
+#    - Можно увеличить для большей нагрузки
+#
+# 5. Сеть:
+#    - Все сервисы в одной Docker сети (systech-network)
+#    - Изолированы от других контейнеров на хосте
+#
+# ============================================
+# Useful Commands
+# ============================================
+#
+# Запуск:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Остановка:
+#   docker compose -f docker-compose.prod.yml down
+#
+# Логи:
+#   docker compose -f docker-compose.prod.yml logs -f
+#   docker compose -f docker-compose.prod.yml logs -f api
+#
+# Статус:
+#   docker compose -f docker-compose.prod.yml ps
+#
+# Перезапуск:
+#   docker compose -f docker-compose.prod.yml restart
+#   docker compose -f docker-compose.prod.yml restart api
+#
+# Обновление образов:
+#   docker compose -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Выполнение миграций:
+#   docker compose -f docker-compose.prod.yml exec api alembic upgrade head
+#
+# Shell в контейнер:
+#   docker compose -f docker-compose.prod.yml exec api bash
+#   docker compose -f docker-compose.prod.yml exec postgres psql -U systech_user -d systech_aidd
+#
+# ============================================
+
