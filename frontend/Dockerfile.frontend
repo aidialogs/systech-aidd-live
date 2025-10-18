@@ -21,7 +21,6 @@ COPY frontend/next.config.mjs ./
 COPY frontend/tsconfig.json ./
 COPY frontend/postcss.config.mjs ./
 COPY frontend/components.json ./
-COPY frontend/next-env.d.ts ./
 COPY frontend/eslint.config.mjs ./
 
 # Expose frontend port
