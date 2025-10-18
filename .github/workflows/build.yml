@@ -1,0 +1,96 @@
+name: Build and Push Docker Images
+
+on:
+  # Проверка сборки при Pull Request (без публикации)
+  pull_request:
+    branches:
+      - main
+      - day6-ci-draft
+  
+  # Сборка и публикация при push в тестовую ветку
+  push:
+    branches:
+      - day6-ci-draft
+
+# Разрешения для публикации в GitHub Container Registry
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        service: [bot, api, frontend]
+        include:
+          # Контекст и Dockerfile для каждого сервиса
+          - service: bot
+            context: .
+            dockerfile: devops/Dockerfile.bot
+          - service: api
+            context: .
+            dockerfile: devops/Dockerfile.api
+          - service: frontend
+            context: frontend
+            dockerfile: ../devops/Dockerfile.frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      # Login только при push (не для PR)
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      # Извлечение метаданных для тегов и labels
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+          tags: |
+            # latest для push в day6-ci-draft
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/day6-ci-draft' }}
+            # Короткий SHA коммита
+            type=sha,prefix=sha-,format=short
+      
+      # Build и Push образа
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.dockerfile }}
+          # Push только при push event (не для PR)
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Кэширование Docker layers для ускорения сборки
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+      
+      - name: Image build summary
+        run: |
+          echo "### 🐳 Docker Image Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Service:** ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Pushed:** ${{ github.event_name == 'push' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "**Image:** \`ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest\`" >> $GITHUB_STEP_SUMMARY
+            echo "**SHA tag:** \`ghcr.io/${{ github.repository }}/${{ matrix.service }}:sha-${GITHUB_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "*Image built successfully but not pushed (PR check only)*" >> $GITHUB_STEP_SUMMARY
+          fi
+

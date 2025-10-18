@@ -1,30 +1,41 @@
 # Makefile для управления Docker окружением
 # Все команды запускаются из директории devops/
 
-.PHONY: help build up down restart logs clean test status
+.PHONY: help build up down restart logs clean test status pull up-registry down-registry
 
 # По умолчанию показать справку
 help:
 	@echo "Доступные команды для Docker окружения:"
 	@echo ""
+	@echo "📦 Локальная сборка:"
 	@echo "  make build        - Собрать все Docker образы"
 	@echo "  make up           - Запустить все сервисы"
 	@echo "  make down         - Остановить все сервисы"
 	@echo "  make restart      - Перезапустить все сервисы"
-	@echo "  make logs         - Показать логи всех сервисов"
-	@echo "  make clean        - Остановить и удалить все (включая volumes)"
-	@echo "  make test         - Запустить тесты в контейнере bot"
 	@echo ""
+	@echo "🚀 Работа с Registry (ghcr.io):"
+	@echo "  make pull         - Загрузить образы из GitHub Container Registry"
+	@echo "  make up-registry  - Запустить сервисы из образов registry"
+	@echo "  make down-registry - Остановить сервисы registry"
+	@echo ""
+	@echo "📝 Логи и отладка:"
+	@echo "  make logs         - Показать логи всех сервисов"
 	@echo "  make logs-bot     - Логи бота"
 	@echo "  make logs-api     - Логи API"
 	@echo "  make logs-frontend - Логи фронтенда"
 	@echo "  make logs-db      - Логи базы данных"
 	@echo ""
+	@echo "🔧 Управление:"
 	@echo "  make shell-bot    - Подключиться к контейнеру бота"
 	@echo "  make shell-api    - Подключиться к контейнеру API"
 	@echo "  make shell-db     - Подключиться к PostgreSQL"
+	@echo "  make test         - Запустить тесты в контейнере bot"
 	@echo ""
+	@echo "🧹 Очистка:"
+	@echo "  make clean        - Остановить и удалить все (включая volumes)"
 	@echo "  make rebuild      - Пересобрать образы без кэша"
+	@echo ""
+	@echo "📊 Информация:"
 	@echo "  make ps           - Показать статус контейнеров"
 	@echo "  make status       - Красивый статус всех сервисов"
 	@echo "  make stats        - Показать использование ресурсов"
@@ -176,4 +187,35 @@ status:
 	@echo "  make restart      - Перезапустить сервисы"
 	@echo "  make down         - Остановить сервисы"
 	@echo ""
+
+# ═══════════════════════════════════════════════════════════════
+# Команды для работы с GitHub Container Registry
+# ═══════════════════════════════════════════════════════════════
+
+# Загрузить образы из ghcr.io
+pull:
+	@echo "📥 Загрузка образов из GitHub Container Registry..."
+	docker compose -f docker-compose.registry.yml pull
+
+# Запустить сервисы из образов registry
+up-registry:
+	@echo "🚀 Запуск сервисов из образов registry..."
+	docker compose -f docker-compose.registry.yml up
+
+# Запустить в фоновом режиме
+up-registry-daemon:
+	@echo "🚀 Запуск сервисов из образов registry (в фоне)..."
+	docker compose -f docker-compose.registry.yml up -d
+
+# Остановить сервисы registry
+down-registry:
+	docker compose -f docker-compose.registry.yml down
+
+# Перезапустить сервисы registry
+restart-registry:
+	docker compose -f docker-compose.registry.yml restart
+
+# Логи сервисов registry
+logs-registry:
+	docker compose -f docker-compose.registry.yml logs -f
 

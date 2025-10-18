@@ -8,8 +8,8 @@
 
 | Код | Описание | Статус | План |
 |-----|----------|--------|------|
-| D0 | Basic Docker Setup | 📝 Planned | - |
-| D1 | Build & Publish | 📝 Planned | - |
+| D0 | Basic Docker Setup | ✅ Completed | [Sprint D0 Plan](plans/sprint-d0-plan.md) |
+| D1 | Build & Publish | ✅ Completed | [Sprint D1 Plan](plans/sprint-d1-plan.md) |
 | D2 | Развертывание на сервер | 📝 Planned | - |
 | D3 | Auto Deploy | 📝 Planned | - |
 
@@ -54,20 +54,39 @@
 
 ---
 
-## D1: Build & Publish
+## ✅ Спринт D1: Build & Publish
 
-### Цели
+**Статус:** ✅ Completed (18 октября 2025)
 
-Автоматическая сборка и публикация Docker образов в GitHub Container Registry при push в main ветку.
+**Цель:** Автоматическая сборка и публикация Docker образов в GitHub Container Registry.
 
-### Состав работ
+**Выполненные работы:**
+- ✅ Создано введение в GitHub Actions (GITHUB_ACTIONS_INTRO.md)
+- ✅ Создан GitHub Actions workflow (.github/workflows/build.yml)
+- ✅ Настроены триггеры: PR (только build) и push в day6-ci-draft (build + publish)
+- ✅ Реализована matrix strategy для параллельной сборки 3 образов
+- ✅ Настроено кэширование Docker layers для ускорения сборки
+- ✅ Образы публикуются с тегами: latest и sha-abc1234
+- ✅ Создан docker-compose.registry.yml для использования образов из ghcr.io
+- ✅ Создан docker-compose.override.example.yml для гибкого переключения
+- ✅ Обновлен Makefile с командами для работы с registry
+- ✅ Создана инструкция по настройке публичного доступа (REGISTRY_SETUP.md)
+- ✅ Создана полная инструкция по CI/CD (CI_CD_USAGE.md)
+- ✅ Обновлен README.md с badge и инструкциями по использованию образов
+- ✅ Образы готовы к использованию в спринтах D2 и D3
 
-- Создать GitHub Actions workflow `.github/workflows/build.yml`
-- Настроить trigger на push в main ветку
-- Реализовать сборку 3 образов (bot, api, frontend)
-- Настроить публикацию образов в ghcr.io с тегом `latest`
-- Создать инструкцию по настройке permissions для GitHub Container Registry
-- Добавить badges статуса сборки в README.md
+**Результат:** Автоматическая сборка и публикация образов в ghcr.io через GitHub Actions.
+
+**Образы:**
+- `ghcr.io/<owner>/<repo>/bot:latest`
+- `ghcr.io/<owner>/<repo>/api:latest`
+- `ghcr.io/<owner>/<repo>/frontend:latest`
+
+**Документация:**
+- [GitHub Actions Intro](GITHUB_ACTIONS_INTRO.md) - Введение в GitHub Actions
+- [Registry Setup](REGISTRY_SETUP.md) - Настройка публичного доступа
+- [CI/CD Usage](CI_CD_USAGE.md) - Полное руководство по работе с CI/CD
+- [Sprint D1 Complete](../SPRINT_D1_COMPLETE.md) - Отчет о завершении спринта
 
 ---
 

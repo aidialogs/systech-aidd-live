@@ -1,5 +1,7 @@
 # systech-aidd-live
 
+[![Build and Push Docker Images](https://github.com/aidialogs/systech-aidd-live/actions/workflows/build.yml/badge.svg)](https://github.com/aidialogs/systech-aidd-live/actions/workflows/build.yml)
+
 AI-powered Telegram chatbot с управлением контекстом диалога и интеграцией LLM.
 
 ![Пример работы бота](doc/day01-preview.png)
@@ -150,6 +152,88 @@ docker compose up
 ### Подробная документация
 
 Полный гайд по Docker см. в [devops/doc/DOCKER_QUICKSTART.md](devops/doc/DOCKER_QUICKSTART.md)
+
+---
+
+## 🚀 Использование готовых образов из Registry
+
+**Еще проще!** Не хотите собирать образы локально? Используйте предсобранные образы из GitHub Container Registry.
+
+### Что это дает?
+
+- ✅ Не нужно собирать образы локально (экономия времени)
+- ✅ Образы собираются автоматически через GitHub Actions
+- ✅ Всегда актуальные версии из `day6-ci-draft` ветки
+- ✅ Публичный доступ — не требуется авторизация
+
+### Быстрый старт с образами из registry
+
+```bash
+# 1. Создайте файл .env из шаблона
+cp devops/env.example .env
+nano .env  # Заполните BOT_TOKEN, LLM_API_KEY и другие переменные
+
+# 2. Загрузите образы из GitHub Container Registry
+cd devops
+make pull
+
+# 3. Запустите сервисы из готовых образов
+make up-registry
+```
+
+Готово! 🎉
+
+### Доступные образы
+
+Образы публикуются автоматически при push в ветку `day6-ci-draft`:
+
+- **Bot:** `ghcr.io/aidialogs/systech-aidd-live/bot:latest`
+- **API:** `ghcr.io/aidialogs/systech-aidd-live/api:latest`
+- **Frontend:** `ghcr.io/aidialogs/systech-aidd-live/frontend:latest`
+
+**Теги:**
+- `latest` — последняя версия из day6-ci-draft
+- `sha-abc1234` — конкретный коммит (для воспроизводимости)
+
+### Команды для работы с registry
+
+```bash
+cd devops
+
+# Загрузить образы из registry
+make pull
+
+# Запустить сервисы из образов registry
+make up-registry
+
+# Остановить сервисы
+make down-registry
+
+# Логи
+make logs-registry
+```
+
+### Переключение между локальной сборкой и registry
+
+**Локальная сборка** (по умолчанию):
+```bash
+cd devops
+make build
+make up
+```
+
+**Образы из registry**:
+```bash
+cd devops
+make pull
+make up-registry
+```
+
+### Документация по CI/CD
+
+- [GitHub Actions Intro](devops/doc/GITHUB_ACTIONS_INTRO.md) — введение в GitHub Actions
+- [Registry Setup](devops/doc/REGISTRY_SETUP.md) — настройка публичного доступа
+- [CI/CD Usage](devops/doc/CI_CD_USAGE.md) — полное руководство по работе с CI/CD
 
 ---
 
