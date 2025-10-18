@@ -168,7 +168,7 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ${{ matrix.service == 'frontend' && './frontend' || '.' }}
           file: devops/Dockerfile.${{ matrix.service }}
           push: false
           tags: ${{ steps.meta.outputs.tags }}
