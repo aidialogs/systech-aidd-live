@@ -16,7 +16,7 @@ MVP-подход к внедрению DevOps процессов в проект
 | Sprint | Description | Status | Plan |
 |--------|-------------|--------|------|
 | **D0** | Basic Docker Setup | 🟢 Completed | [sprint-d0-docker-setup.md](plans/sprint-d0-docker-setup.md) |
-| **D1** | Build & Publish | 🔵 Planned | - |
+| **D1** | Build & Publish | 🟢 Completed | [sprint-d1-build-publish.md](plans/sprint-d1-build-publish.md) |
 | **D2** | Развертывание на сервер | 🔵 Planned | - |
 | **D3** | Auto Deploy | 🔵 Planned | - |
 

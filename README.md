@@ -2,6 +2,8 @@
 
 AI-powered Telegram chatbot с управлением контекстом диалога и интеграцией LLM.
 
+[![Build and Publish](https://github.com/aidialogs/systech-aidd-live/actions/workflows/build-and-publish.yml/badge.svg?branch=day06-smirnov-live-02-ci-pipeline)](https://github.com/aidialogs/systech-aidd-live/actions/workflows/build-and-publish.yml)
+
 ![Пример работы бота](doc/day01-preview.png)
 
 ## 🎯 Описание
@@ -554,7 +556,7 @@ DevOps infrastructure for containerization, CI/CD, and automated deployment.
 - 📋 [DevOps Roadmap](devops/doc/devops-roadmap.md) - development roadmap for DevOps processes
 - 🐳 **Docker containerization** - ✅ **Готово!** Запуск всех сервисов: `make docker-up`
 - 📝 [Docker Setup Summary](DOCKER-SETUP-SUMMARY.md) - краткое руководство по Docker
-- 🔄 GitHub Actions - automated build and deployment pipelines (планируется в D1)
+- 🔄 **GitHub Actions** - ✅ **Готово!** Автоматическая сборка и публикация образов
 - 🚀 Auto Deploy - one-click deployment to production server (планируется в D3)
 
 ### Current Status
@@ -566,7 +568,14 @@ DevOps infrastructure for containerization, CI/CD, and automated deployment.
 - Добавлены удобные команды в Makefile
 - Обновлена документация с инструкциями
 
-**Следующий шаг:** Sprint D1 - Build & Publish (GitHub Actions + Container Registry)
+**Sprint D1: Build & Publish** - ✅ Выполнен
+
+- GitHub Actions workflow для автоматической сборки образов
+- Публикация в GitHub Container Registry (ghcr.io)
+- Публичные образы доступны без авторизации
+- docker-compose.prod.yml для использования образов из registry
+
+**Следующий шаг:** Sprint D2 - Развертывание на сервер (ручной deploy)
 
 См. [DevOps Roadmap](devops/doc/devops-roadmap.md) для детального плана.
 
@@ -586,6 +595,84 @@ PostgreSQL :5432
 - ✅ Статус: `make docker-ps`
 
 См. [DOCKER-SETUP-SUMMARY.md](DOCKER-SETUP-SUMMARY.md) для быстрого старта.
+
+## 🚢 Использование образов из GitHub Container Registry
+
+Образы автоматически публикуются в ghcr.io после каждого commit в ветку `day06-smirnov-live-02-ci-pipeline`.
+
+### Быстрый старт с готовыми образами
+
+**1. Создайте .env файл:**
+```bash
+cp env.docker.example .env
+# Заполните обязательные переменные (BOT_TOKEN, LLM_API_KEY, etc.)
+```
+
+**2. Скачайте образы из registry:**
+```bash
+make docker-pull
+```
+
+**3. Запустите сервисы:**
+```bash
+make docker-prod-up
+```
+
+**4. Примените миграции (только при первом запуске):**
+```bash
+docker compose -f docker-compose.prod.yml exec api uv run alembic upgrade head
+```
+
+**5. Проверьте работоспособность:**
+- API: http://localhost:8000/docs
+- Frontend: http://localhost:3000
+- Bot: отправьте сообщение боту в Telegram
+
+### Доступные образы
+
+Все образы публичные - авторизация не требуется:
+
+- `ghcr.io/aidialogs/systech-aidd-bot:latest` - Telegram bot
+- `ghcr.io/aidialogs/systech-aidd-api:latest` - REST API
+- `ghcr.io/aidialogs/systech-aidd-frontend:latest` - Web UI
+
+### Команды для работы с registry образами
+
+| Команда | Описание |
+|---------|----------|
+| `make docker-pull` | Скачать образы из registry |
+| `make docker-prod-up` | Запуск с образами из registry |
+| `make docker-prod-down` | Остановка prod окружения |
+| `make docker-prod-logs` | Просмотр логов |
+| `make docker-prod-ps` | Статус сервисов |
+| `make docker-prod-restart` | Перезапуск сервисов |
+
+### Локальная разработка vs Production образы
+
+**Локальная разработка (сборка образов локально):**
+```bash
+make docker-build    # Собрать образы
+make docker-up       # Запустить сервисы
+make docker-logs     # Просмотр логов
+```
+
+**Production образы (из registry):**
+```bash
+make docker-pull        # Скачать образы из ghcr.io
+make docker-prod-up     # Запустить с образами из registry
+make docker-prod-logs   # Просмотр логов
+```
+
+### Версионирование образов
+
+Каждый образ имеет два тега:
+- `latest` - последняя версия из ветки
+- `sha-<commit>` - конкретная версия по commit hash
+
+**Пример использования конкретной версии:**
+```bash
+docker pull ghcr.io/aidialogs/systech-aidd-bot:sha-a1b2c3d4
+```
 
 ## Структура проекта
 

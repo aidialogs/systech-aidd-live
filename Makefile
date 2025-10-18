@@ -250,3 +250,28 @@ docker-restart:
 docker-clean:
 	@echo "Cleaning up Docker (containers, volumes, images)..."
 	docker compose down -v --rmi all
+
+# Docker Registry commands (for production images from ghcr.io)
+docker-pull:
+	@echo "Pulling images from GitHub Container Registry..."
+	docker compose -f docker-compose.prod.yml pull
+
+docker-prod-up:
+	@echo "Starting all services with production images from registry..."
+	docker compose -f docker-compose.prod.yml up -d
+
+docker-prod-down:
+	@echo "Stopping production services..."
+	docker compose -f docker-compose.prod.yml down
+
+docker-prod-logs:
+	@echo "Showing logs for production services..."
+	docker compose -f docker-compose.prod.yml logs -f
+
+docker-prod-ps:
+	@echo "Showing status of production services..."
+	docker compose -f docker-compose.prod.yml ps
+
+docker-prod-restart:
+	@echo "Restarting production services..."
+	docker compose -f docker-compose.prod.yml restart
