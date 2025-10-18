@@ -326,6 +326,9 @@ make check-all # Полная проверка (format + lint + test-cov)
 - `tasklist.md` - итерационный план разработки с отчетом по прогрессу
 - `adrs/` - Architecture Decision Records
 
+**DevOps документация:**
+- `devops/doc/devops-roadmap.md` - план развития DevOps процессов (Docker, CI/CD, Deployment)
+
 ## 🚀 Разработка
 
 Проект разработан итеративно за **8 итераций**:
