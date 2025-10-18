@@ -72,7 +72,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 10
       
       - name: Get pnpm store directory
         id: pnpm-cache
