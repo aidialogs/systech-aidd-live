@@ -1,0 +1,28 @@
+# Dockerfile for Bot and API services
+# Simple single-stage build for MVP
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install uv
+RUN pip install --no-cache-dir uv
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies
+RUN uv sync --frozen
+
+# Copy application code
+COPY src/ ./src/
+COPY prompts/ ./prompts/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+
+# Expose API port
+EXPOSE 8000
+
+# Default command (runs API, overridden for bot in docker-compose)
+CMD ["uv", "run", "python", "-m", "src.api_server"]
+

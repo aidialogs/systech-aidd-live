@@ -7,6 +7,10 @@
 - **aiogram 3.x** - асинхронная библиотека для Telegram Bot API
 - **openai** - Python SDK для работы с LLM через OpenAI Compatible API
 - **python-dotenv** - загрузка переменных окружения из .env файла
+- **PostgreSQL 16** - реляционная БД для персистентного хранения
+- **SQLAlchemy 2.0 (async)** - ORM для работы с БД
+- **asyncpg** - высокопроизводительный async драйвер для PostgreSQL
+- **Alembic** - система миграций БД
 
 ### Управление зависимостями и окружением
 - **uv** - современный менеджер пакетов и виртуальных окружений
@@ -35,7 +39,7 @@
 
 ### Деплой
 - **Локальный запуск** - `python -m src.main`
-- Без Docker на первом этапе
+- **Docker Compose** - для PostgreSQL  16 в разработке
 - Запуск вручную, без автоматизации CI/CD
 
 ---
@@ -48,18 +52,20 @@
 - **Явное лучше неявного** - простой и понятный код
 - **Asyncio** - асинхронный код (т.к. aiogram и openai async)
 
-### Что НЕ используем (для простоты MVP)
+### Что НЕ используем (для простоты)
 - ❌ Сложные паттерны проектирования (фабрики, строители, стратегии)
 - ❌ DI-контейнеры и IoC
 - ❌ Избыточную абстракцию и многоуровневую иерархию классов
 - ❌ Pydantic models (используем простые dataclasses)
 - ❌ Микросервисы
 - ❌ Очереди сообщений
-- ❌ БД на первом этапе (только in-memory хранение контекста)
 
 ### Что используем для качества кода
 - ✅ **Type hints** - обязательны для всех функций и методов
 - ✅ **Dataclasses** - для структур данных (Config)
+- ✅ **SQLAlchemy 2.0 декларативные модели** - ORM с type hints (Mapped[])
+- ✅ **Repository pattern** - изоляция работы с БД
+- ✅ **Soft delete** - логическое удаление данных (is_deleted флаг)
 - ✅ **Ruff** - форматирование и линтинг
 - ✅ **Mypy** - проверка типов (strict mode)
 - ✅ **Custom exceptions** - для разных типов ошибок (ConfigError, LLMError)
@@ -83,28 +89,48 @@
 systech-aidd-live/
 ├── src/
 │   ├── __init__.py
-│   ├── main.py              # Точка входа, инициализация, запуск polling
+│   ├── main.py              # Точка входа, инициализация, DB lifecycle, запуск polling
 │   ├── config.py            # Config dataclass - настройки из .env с валидацией
 │   ├── exceptions.py        # Custom exceptions (ConfigError, LLMError)
-│   ├── protocols.py         # Protocol interfaces для DI (LLMClientProtocol, ContextManagerProtocol)
-│   ├── message.py           # Message класс - структура сообщения
-│   ├── command_handler.py   # CommandHandler класс - обработка команд (/start, /help, /reset, /role)
-│   ├── message_handler.py   # MessageHandler класс - координация обработки сообщений
-│   ├── llm_client.py        # LLMClient класс - работа с LLM API
-│   └── context_manager.py   # ContextManager класс - управление контекстом
+│   ├── protocols.py         # Protocol interfaces для DI
+│   ├── models.py            # SQLAlchemy декларативные модели (User, Message)
+│   ├── database.py          # Async engine, session_maker, DB lifecycle
+│   ├── repository.py        # MessageRepository - работа с БД через ORM
+│   ├── message.py           # Message класс - структура сообщения (+ from_orm)
+│   ├── command_handler.py   # CommandHandler - обработка команд
+│   ├── message_handler.py   # MessageHandler - координация обработки
+│   ├── llm_client.py        # LLMClient - работа с LLM API
+│   └── context_manager.py   # ContextManager - управление контекстом через БД
+├── alembic/
+│   ├── versions/            # Миграции БД (autogenerate)
+│   ├── env.py               # Alembic async config
+│   └── script.py.mako
+├── alembic.ini              # Конфигурация Alembic
+├── docker-compose.yml       # PostgreSQL 16 контейнер
 ├── prompts/
 │   └── system_prompt.txt    # Системный промпт для роли AICodingExpert
 ├── tests/
 │   ├── __init__.py
+│   ├── conftest.py          # Async fixtures (engine, session, repository)
+│   ├── test_models.py       # Тесты SQLAlchemy моделей
+│   ├── test_repository.py   # Тесты MessageRepository
 │   ├── test_llm_client.py
-│   └── test_context_manager.py
+│   ├── test_context_manager.py
+│   └── test_integration.py
+├── doc/
+│   ├── adrs/
+│   │   └── ADR-06.md        # Выбор PostgreSQL + SQLAlchemy + Alembic
+│   ├── roadmap.md
+│   ├── vision.md
+│   └── idea.md
 ├── logs/                    # Директория для логов (создается автоматически)
 │   └── app.log
 ├── .env.example             # Пример конфигурации
+├── .env                     # Локальные настройки (не в git)
 ├── .gitignore
 ├── pyproject.toml           # Зависимости проекта
 ├── uv.lock                  # Зафиксированные версии
-├── Makefile                 # Команды для запуска
+├── Makefile                 # Команды для запуска (+ db-up, db-migrate)
 └── README.md
 ```
 
@@ -126,8 +152,11 @@ User (Telegram)
      ↓          ↓         ↓
 [CommandHandler] [ContextManager] [LLMClient]
      ↓              ↓                  ↓
-[/start,/help]  [In-Memory Dict]  [OpenAI API]
-[/reset]
+[/start,/help]  [Repository]      [OpenAI API]
+[/reset]           ↓
+                [Database]
+                   ↓
+              [PostgreSQL]
 ```
 
 ### Поток обработки сообщения
@@ -156,10 +185,22 @@ User (Telegram)
 - Зависит только от ContextManager (через Protocol)
 - Для команды /role использует Config.system_prompt (содержимое файла промпта)
 
-**ContextManager** (хранилище):
-- Хранит историю диалогов в памяти (dict: (user_id, chat_id) → list of Message)
-- Ограничение контекста: последние N сообщений (например, 20)
-- Очистка контекста по команде
+**ContextManager** (управление контекстом):
+- Координирует работу с историей диалогов через MessageRepository
+- Все операции async (add_message, get_context, clear_context)
+- Ограничение контекста: последние N сообщений через SQL LIMIT
+- Soft delete контекста по команде (is_deleted = True)
+
+**MessageRepository** (слой доступа к данным):
+- Repository pattern для изоляции работы с БД
+- CRUD операции для User и Message через SQLAlchemy ORM
+- Методы: ensure_user(), add_message(), get_messages(), soft_delete_messages()
+- Все операции async
+
+**Database** (инфраструктура БД):
+- Async SQLAlchemy engine с asyncpg driver
+- Session maker для создания сессий
+- Lifecycle management: init_database(), close_database()
 
 **LLMClient** (клиент внешнего API):
 - Отправка запросов к OpenAI Compatible API
@@ -179,8 +220,10 @@ User (Telegram)
 - **SRP (Single Responsibility Principle)** - каждый класс имеет одну ответственность
 - **DRY (Don't Repeat Yourself)** - нет дублирования кода
 - **DIP (Dependency Inversion)** - зависимости через Protocol интерфейсы (для тестируемости)
-- **Синхронность операций** - последовательная обработка без очередей
-- **In-memory state** - без БД, состояние в памяти процесса
+- **Repository pattern** - изоляция работы с БД от бизнес-логики
+- **Async/await** - все операции с БД и API асинхронные
+- **Персистентность** - PostgreSQL для надежного хранения истории диалогов
+- **Soft delete** - логическое удаление данных (is_deleted флаг)
 - **Stateless LLM** - LLMClient не хранит состояние
 
 ### Protocols для Dependency Injection
@@ -200,55 +243,93 @@ User (Telegram)
 
 ### Класс Message
 
-Простой класс для структурирования сообщений с type hints:
+Класс для структурирования сообщений с type hints и поддержкой ORM:
 
 ```python
+from datetime import datetime
+
 class Message:
     """Represents a chat message with role and content."""
     
-    def __init__(self, role: str, content: str) -> None:
-        self.role = role        # "system" | "user" | "assistant"
-        self.content = content  # str - текст сообщения
+    def __init__(
+        self, 
+        role: str, 
+        content: str,
+        id: int | None = None,
+        created_at: datetime | None = None,
+        content_length: int | None = None,
+        is_deleted: bool = False
+    ) -> None:
+        self.role = role
+        self.content = content
+        self.id = id
+        self.created_at = created_at
+        self.content_length = content_length if content_length is not None else len(content)
+        self.is_deleted = is_deleted
     
     def to_dict(self) -> dict[str, str]:
         """Convert message to dictionary format for API calls."""
         return {"role": self.role, "content": self.content}
+    
+    @classmethod
+    def from_orm(cls, orm_message: models.Message) -> "Message":
+        """Create Message from ORM model instance."""
+        return cls(
+            role=orm_message.role,
+            content=orm_message.content,
+            id=orm_message.id,
+            created_at=orm_message.created_at,
+            content_length=orm_message.content_length,
+            is_deleted=orm_message.is_deleted
+        )
 ```
 
-### Структура хранилища контекста
+### Схема базы данных PostgreSQL
 
-```python
-# ContextManager.contexts
-{
-    (user_id, chat_id): [
-        Message("system", "Ты полезный ассистент..."),
-        Message("user", "Привет"),
-        Message("assistant", "Здравствуйте!"),
-        ...
-    ]
-}
+**Таблица `users`:**
+```sql
+id              BIGINT PRIMARY KEY  -- Telegram user_id
+created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+is_deleted      BOOLEAN DEFAULT FALSE
 ```
 
-**Ключ хранилища:**
-- `(user_id, chat_id)` - кортеж из двух int
-- `user_id` - ID пользователя из Telegram (message.from_user.id)
-- `chat_id` - ID чата из Telegram (message.chat.id)
+**Таблица `messages`:**
+```sql
+id              SERIAL PRIMARY KEY
+user_id         BIGINT FOREIGN KEY REFERENCES users(id)
+chat_id         BIGINT NOT NULL  -- Telegram chat_id (не FK)
+role            VARCHAR(20) NOT NULL  -- "system" | "user" | "assistant"
+content         TEXT NOT NULL
+content_length  INTEGER NOT NULL
+created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+is_deleted      BOOLEAN DEFAULT FALSE
+```
 
-**Значение:**
-- Список объектов Message
+**Индексы для производительности:**
+- `idx_messages_user_chat` на (user_id, chat_id, is_deleted, created_at)
+- `idx_users_active` на (is_deleted, created_at)
+
+**Связи:**
+- Один User → много Messages (1:N)
+- `user_id` в messages - FK к users
+- `chat_id` - просто поле (не FK, один user может писать в разных чатах)
 
 ### Ограничения и правила
 
 - **max_context_messages**: 20 сообщений (настраивается через Config)
-- При превышении лимита - удаляются старые сообщения (кроме system)
-- System prompt всегда остается первым в списке
-- Хранение только в оперативной памяти (при перезапуске - потеря данных)
+- **Стратегия ограничения контекста**: "Ограничение при чтении"
+  - Все сообщения сохраняются в БД (полная история)
+  - При получении контекста: система возвращает только последние N сообщений через SQL LIMIT
+  - System prompt всегда включается первым (не входит в лимит)
+- **Soft delete**: при очистке контекста устанавливается `is_deleted = True`
+- **Персистентность**: история сохраняется между перезапусками бота
 
-### Без использования:
-- ❌ Базы данных (PostgreSQL, SQLite)
-- ❌ ORM (SQLAlchemy)
-- ❌ Персистентное хранилище
-- ❌ Pydantic models (используем простые dataclasses)
+### Что используем для хранения данных:
+- ✅ PostgreSQL 16 (production) с asyncpg
+- ✅ SQLite (тесты) с aiosqlite - in-memory БД для быстрого тестирования
+- ✅ SQLAlchemy 2.0 async ORM с декларативными моделями
+- ✅ Alembic для миграций БД (autogenerate)
+- ✅ Repository pattern для изоляции работы с БД
 
 ---
 
@@ -398,16 +479,17 @@ SYSTEM_PROMPT=Ты полезный AI-ассистент. Отвечай кра
 
 **7. Длинный диалог (превышение лимита контекста)**
 - При превышении max_context_messages (например, 20)
-- ContextManager автоматически удаляет старые сообщения
-- System prompt всегда сохраняется
+- ContextManager возвращает только последние N сообщений через SQL LIMIT
+- Полная история сохраняется в БД (для аналитики и отладки)
+- System prompt всегда включается первым
 - Процесс прозрачен для пользователя - никаких уведомлений
-- Диалог продолжается с сокращенным контекстом
+- Диалог продолжается с ограниченным контекстом
 
-### Ограничения MVP
+### Ограничения
 - Только текстовые сообщения (без изображений, файлов, голосовых)
 - Один system prompt для всех пользователей
 - Без персонализации ответов
-- Без истории между перезапусками бота
+- История между перезапусками - ✅ **теперь сохраняется в PostgreSQL**
 
 ---
 
@@ -435,11 +517,13 @@ class Config:
     llm_model: str
     system_prompt: str
     max_context_messages: int
+    database_url: str
+    database_echo: bool
     
     @classmethod
     def from_env(cls) -> "Config":
         """Load configuration from environment variables with validation."""
-        # Валидация обязательных полей
+        # Валидация обязательных полей (включая DATABASE_URL)
         # Бросает ConfigError если переменные отсутствуют
         # Загружает system_prompt из файла prompts/system_prompt.txt
         # или из переменной окружения SYSTEM_PROMPT
@@ -453,11 +537,13 @@ class Config:
 - `LLM_API_KEY` - API ключ для OpenRouter
 - `LLM_BASE_URL` - URL провайдера LLM (https://openrouter.ai/api/v1)
 - `LLM_MODEL` - название модели (например: anthropic/claude-3.5-sonnet)
+- `DATABASE_URL` - URL подключения к PostgreSQL (postgresql+asyncpg://user:password@host:port/dbname)
 
 **Опциональные параметры (с дефолтами):**
 - `SYSTEM_PROMPT` - системный промпт (default: загружается из prompts/system_prompt.txt)
 - `SYSTEM_PROMPT_FILE` - путь к файлу с системным промптом (default: "prompts/system_prompt.txt")
 - `MAX_CONTEXT_MESSAGES` - лимит сообщений в контексте (default: 20)
+- `DATABASE_ECHO` - вывод SQL запросов в логи (default: False)
 
 ### Файлы конфигурации
 
@@ -469,6 +555,8 @@ LLM_BASE_URL=https://openrouter.ai/api/v1
 LLM_MODEL=anthropic/claude-3.5-sonnet
 SYSTEM_PROMPT_FILE=prompts/system_prompt.txt
 MAX_CONTEXT_MESSAGES=20
+DATABASE_URL=postgresql+asyncpg://systech_user:systech_password@localhost:5432/systech_aidd
+DATABASE_ECHO=False
 ```
 
 **.env.example** (в git):
@@ -479,6 +567,8 @@ LLM_BASE_URL=https://openrouter.ai/api/v1
 LLM_MODEL=anthropic/claude-3.5-sonnet
 SYSTEM_PROMPT_FILE=prompts/system_prompt.txt
 MAX_CONTEXT_MESSAGES=20
+DATABASE_URL=postgresql+asyncpg://systech_user:systech_password@localhost:5432/systech_aidd
+DATABASE_ECHO=False
 ```
 
 ### Загрузка .env
@@ -581,9 +671,10 @@ logging.basicConfig(
    ```bash
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
-3. Клонировать репозиторий
-4. Создать `.env` файл на основе `.env.example`
-5. Заполнить обязательные переменные в `.env`
+3. Установить Docker и Docker Compose (для PostgreSQL)
+4. Клонировать репозиторий
+5. Создать `.env` файл на основе `.env.example`
+6. Заполнить обязательные переменные в `.env`
 
 ### Установка зависимостей
 
@@ -595,6 +686,22 @@ make install
 ```bash
 uv sync
 ```
+
+### Запуск PostgreSQL
+
+```bash
+make db-up
+```
+
+Это запускает PostgreSQL 16 в Docker контейнере.
+
+### Выполнение миграций
+
+```bash
+make db-migrate
+```
+
+Применяет миграции Alembic к базе данных.
 
 ### Запуск бота
 
@@ -620,12 +727,33 @@ install:
 run:
     uv run python -m src.main
 
+# База данных
+db-up:
+    docker compose up -d postgres
+
+db-down:
+    docker compose down
+
+db-migrate:
+    uv run alembic upgrade head
+
+db-rollback:
+    uv run alembic downgrade -1
+
+db-shell:
+    docker compose exec postgres psql -U systech_user -d systech_aidd
+
+db-logs:
+    docker compose logs -f postgres
+
+# Тестирование
 test:
-    uv run pytest
+    uv run pytest tests/ -v -m "not integration"
 
 test-cov:
-    uv run pytest  # с coverage (настроено в pyproject.toml)
+    uv run pytest tests/ --cov=src --cov-report=html --cov-report=term
 
+# Качество кода
 format:
     uv run ruff format src/ tests/
 
@@ -644,17 +772,19 @@ clean:
 
 - Бот работает, пока запущен процесс в терминале
 - При закрытии терминала - бот останавливается
-- При перезапуске - вся история диалогов теряется (in-memory storage)
+- При перезапуске - ✅ **история диалогов сохраняется в PostgreSQL**
 - Логи сохраняются в `logs/app.log` и доступны после перезапуска
+- PostgreSQL работает в Docker контейнере (данные в volume)
 
-### Без деплоя на серверы
+### Деплой
 
-На этапе MVP деплой не предусмотрен:
-- ❌ Без Docker / docker-compose
+Текущее состояние:
+- ✅ Docker Compose для PostgreSQL 16 (локальная разработка)
+- ❌ Без production деплоя бота
 - ❌ Без systemd service или process manager
 - ❌ Без CI/CD
 - ❌ Без облачных платформ
-- ❌ Только локальный запуск на машине разработчика
+- ✅ Локальный запуск на машине разработчика с персистентной БД
 
 ---
 

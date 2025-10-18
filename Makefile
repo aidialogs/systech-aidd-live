@@ -4,6 +4,32 @@
 #   make install            - установка зависимостей (включая dev-инструменты)
 #   make run                - запуск бота
 #
+# Команды для базы данных:
+#   make db-up              - запуск PostgreSQL через Docker Compose
+#   make db-down            - остановка PostgreSQL
+#   make db-migrate         - применение миграций (alembic upgrade head)
+#   make db-rollback        - откат последней миграции
+#   make db-revision        - создание новой миграции (указать message="название")
+#   make db-shell           - подключение к PostgreSQL через psql
+#   make db-logs            - просмотр логов PostgreSQL
+#
+# Команды для API:
+#   make api-run            - запуск API сервера (uvicorn)
+#   make api-test           - тестирование API endpoints (curl)
+#   make api-docs           - открыть Swagger UI документацию
+#
+# Команды для Frontend:
+#   make frontend-install   - установка frontend зависимостей (pnpm)
+#   make frontend-dev       - запуск frontend dev сервера
+#   make frontend-build     - production build frontend
+#   make frontend-start     - запуск frontend production сервера
+#   make frontend-lint      - проверка frontend кода (ESLint)
+#   make frontend-lint-fix  - автоматическое исправление frontend lint ошибок
+#   make frontend-format    - форматирование frontend кода (Prettier)
+#   make frontend-format-check - проверка frontend форматирования
+#   make frontend-type-check - проверка типов TypeScript
+#   make frontend-check-all - все проверки frontend (lint + format + types)
+#
 # Команды для тестирования:
 #   make test               - запуск unit тестов (без integration)
 #   make test-cov           - запуск тестов с coverage (без integration)
@@ -17,8 +43,27 @@
 #
 # Утилиты:
 #   make clean              - очистка логов и временных файлов
+#   make dev                - запуск API и Frontend одновременно (full stack dev)
+#
+# Команды для Docker:
+#   make docker-up          - запуск всех сервисов через Docker Compose
+#   make docker-down        - остановка всех Docker сервисов
+#   make docker-build       - пересборка Docker образов (no cache)
+#   make docker-logs        - просмотр логов всех сервисов
+#   make docker-logs-bot    - просмотр логов Bot
+#   make docker-logs-api    - просмотр логов API
+#   make docker-logs-frontend - просмотр логов Frontend
+#   make docker-logs-db     - просмотр логов PostgreSQL
+#   make docker-ps          - показать статус всех сервисов
+#   make docker-restart     - перезапуск всех сервисов
+#   make docker-clean       - полная очистка (containers + volumes + images)
 #
 .PHONY: install run test test-cov test-all test-integration format lint check-all clean
+.PHONY: db-up db-down db-migrate db-rollback db-revision db-shell db-logs
+.PHONY: api-run api-test api-docs
+.PHONY: frontend-install frontend-dev frontend-build frontend-start frontend-lint frontend-lint-fix frontend-format frontend-format-check frontend-type-check frontend-check-all
+.PHONY: dev
+.PHONY: docker-up docker-down docker-build docker-logs docker-logs-bot docker-logs-api docker-logs-frontend docker-logs-db docker-ps docker-restart docker-clean
 
 install:
 	uv sync --extra dev
@@ -50,4 +95,183 @@ check-all: format lint test-cov
 clean:
 	rm -rf logs/*.log htmlcov/ .coverage .pytest_cache .mypy_cache .ruff_cache
 
+# Database commands
+db-up:
+	docker compose up -d postgres
 
+db-down:
+	docker compose down
+
+db-migrate:
+	uv run alembic upgrade head
+
+db-rollback:
+	uv run alembic downgrade -1
+
+db-revision:
+	uv run alembic revision --autogenerate -m "$(message)"
+
+db-shell:
+	docker compose exec postgres psql -U systech_user -d systech_aidd
+
+db-logs:
+	docker compose logs -f postgres
+
+# API commands
+api-run:
+	uv run python -m src.api_server
+
+api-test:
+	@echo "Testing API endpoints..."
+	@curl -s http://localhost:8000/health | python -m json.tool
+	@echo "\n---\nTesting statistics (default period=month):"
+	@curl -s http://localhost:8000/api/v1/statistics | python -m json.tool
+	@echo "\n---\nTesting statistics (period=day):"
+	@curl -s "http://localhost:8000/api/v1/statistics?period=day" | python -m json.tool
+
+api-docs:
+	@echo "Opening API documentation in browser..."
+	@open http://localhost:8000/docs || xdg-open http://localhost:8000/docs || echo "Please open http://localhost:8000/docs in your browser"
+
+# Frontend commands
+frontend-install:
+	@echo "Installing frontend dependencies..."
+	cd frontend && pnpm install
+
+frontend-dev:
+	@echo "Starting frontend development server..."
+	cd frontend && pnpm dev
+
+frontend-build:
+	@echo "Building frontend for production..."
+	cd frontend && pnpm build
+
+frontend-start:
+	@echo "Starting frontend production server..."
+	cd frontend && pnpm start
+
+frontend-lint:
+	@echo "Linting frontend code..."
+	cd frontend && pnpm lint
+
+frontend-lint-fix:
+	@echo "Fixing frontend linting issues..."
+	cd frontend && pnpm lint:fix
+
+frontend-format:
+	@echo "Formatting frontend code..."
+	cd frontend && pnpm format
+
+frontend-format-check:
+	@echo "Checking frontend code formatting..."
+	cd frontend && pnpm format:check
+
+frontend-type-check:
+	@echo "Type checking frontend code..."
+	cd frontend && pnpm type-check
+
+frontend-check-all: frontend-lint frontend-format-check frontend-type-check
+	@echo "✅ All frontend checks passed!"
+
+# Chat API testing
+.PHONY: chat-test
+chat-test:
+	@echo "Testing chat API (normal mode)..."
+	@curl -X POST http://localhost:8000/api/v1/chat/message \
+		-H "Content-Type: application/json" \
+		-d '{"message": "Hello, how are you?", "mode": "normal", "user_id": 1, "chat_id": 1}' \
+		| python3 -m json.tool
+
+.PHONY: chat-test-admin
+chat-test-admin:
+	@echo "Testing chat API (admin mode with text2sql)..."
+	@curl -X POST http://localhost:8000/api/v1/chat/message \
+		-H "Content-Type: application/json" \
+		-d '{"message": "Сколько всего сообщений в базе данных?", "mode": "admin", "user_id": 1, "chat_id": 1}' \
+		| python3 -m json.tool
+
+.PHONY: chat-history
+chat-history:
+	@echo "Getting chat history..."
+	@curl http://localhost:8000/api/v1/chat/history?user_id=1\&chat_id=1\&limit=10 \
+		| python3 -m json.tool
+
+# Full stack development
+dev:
+	@echo "Starting API and Frontend dev servers..."
+	@echo "API will run on http://localhost:8000"
+	@echo "Frontend will run on http://localhost:3000"
+	@trap 'kill 0' EXIT; \
+	make api-run & \
+	make frontend-dev & \
+	wait
+
+# Docker commands
+docker-up:
+	@echo "Starting all services with Docker Compose..."
+	docker compose up -d
+
+docker-down:
+	@echo "Stopping all Docker services..."
+	docker compose down
+
+docker-build:
+	@echo "Building Docker images (no cache)..."
+	docker compose build --no-cache
+
+docker-logs:
+	@echo "Showing logs for all services..."
+	docker compose logs -f
+
+docker-logs-bot:
+	@echo "Showing logs for Bot service..."
+	docker compose logs -f bot
+
+docker-logs-api:
+	@echo "Showing logs for API service..."
+	docker compose logs -f api
+
+docker-logs-frontend:
+	@echo "Showing logs for Frontend service..."
+	docker compose logs -f frontend
+
+docker-logs-db:
+	@echo "Showing logs for PostgreSQL..."
+	docker compose logs -f postgres
+
+docker-ps:
+	@echo "Showing status of all services..."
+	docker compose ps
+
+docker-restart:
+	@echo "Restarting all services..."
+	docker compose restart
+
+docker-clean:
+	@echo "Cleaning up Docker (containers, volumes, images)..."
+	docker compose down -v --rmi all
+
+# Docker Registry commands (for production images from ghcr.io)
+docker-pull:
+	@echo "Pulling images from GitHub Container Registry..."
+	docker compose -f docker-compose.prod.yml pull
+
+docker-prod-up:
+	@echo "Starting all services with production images from registry..."
+	docker compose -f docker-compose.prod.yml up -d
+
+docker-prod-down:
+	@echo "Stopping production services..."
+	docker compose -f docker-compose.prod.yml down
+
+docker-prod-logs:
+	@echo "Showing logs for production services..."
+	docker compose -f docker-compose.prod.yml logs -f
+
+docker-prod-ps:
+	@echo "Showing status of production services..."
+	docker compose -f docker-compose.prod.yml ps
+
+docker-prod-restart:
+	@echo "Restarting production services..."
+	docker compose -f docker-compose.prod.yml restart

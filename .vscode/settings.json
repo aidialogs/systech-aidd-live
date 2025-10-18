@@ -4,10 +4,14 @@
     "python.testing.pytestArgs": [
         "tests",
         "-v",
-        "--no-cov"
+        "--no-cov",
+        "-m",
+        "not integration"
     ],
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "python.testing.cwd": "${workspaceFolder}",
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.testing.pytestPath": "${workspaceFolder}/.venv/bin/pytest",
     "python.analysis.extraPaths": [
         "${workspaceFolder}/src"
     ],
@@ -32,11 +36,24 @@
         ".mypy_cache": true,
         ".ruff_cache": true
     },
+    "python.envFile": "${workspaceFolder}/.env",
     "terminal.integrated.env.osx": {
-        "UV_PROJECT_ENVIRONMENT": "${workspaceFolder}/.venv"
+        "UV_PROJECT_ENVIRONMENT": "${workspaceFolder}/.venv",
+        "PYTHONPATH": "${workspaceFolder}"
     },
     "terminal.integrated.env.linux": {
-        "UV_PROJECT_ENVIRONMENT": "${workspaceFolder}/.venv"
-    }
+        "UV_PROJECT_ENVIRONMENT": "${workspaceFolder}/.venv",
+        "PYTHONPATH": "${workspaceFolder}"
+    },
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "day04-live-db",
+            "connectString": "postgresql+asyncpg://systech_user:systech_password@localhost:5432/systech_aidd"
+        }
+    ]
 }
 

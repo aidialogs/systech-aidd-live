@@ -13,12 +13,12 @@ SetupHandlerTuple = tuple[MessageHandler, AsyncMock, ContextManager, CommandHand
 
 
 @pytest.fixture
-def setup_handler() -> SetupHandlerTuple:
+async def setup_handler(async_session_maker) -> SetupHandlerTuple:  # type: ignore[no-untyped-def]
     """Set up MessageHandler with mocked dependencies."""
     mock_llm = AsyncMock()
     mock_llm.get_response = AsyncMock(return_value="AI response")
 
-    context_manager = ContextManager(max_context_messages=20)
+    context_manager = ContextManager(async_session_maker, max_context_messages=20)
     command_handler = CommandHandler(context_manager, "Test system prompt")
 
     handler = MessageHandler(
@@ -61,7 +61,7 @@ async def test_handle_regular_message(setup_handler: SetupHandlerTuple) -> None:
     mock_llm.get_response.assert_called_once()
 
     # Verify context was updated
-    context = context_manager.get_context(123, 456)
+    context = await context_manager.get_context(123, 456)
     assert len(context) == 3  # system + user + assistant
     assert context[0].role == "system"
     assert context[1].role == "user"
@@ -70,10 +70,10 @@ async def test_handle_regular_message(setup_handler: SetupHandlerTuple) -> None:
 
 
 @pytest.mark.asyncio
-async def test_handle_none_text() -> None:
+async def test_handle_none_text(async_session_maker) -> None:  # type: ignore[no-untyped-def]
     """Test handling message with None text."""
     mock_llm = AsyncMock()
-    context_manager = ContextManager(20)
+    context_manager = ContextManager(async_session_maker, max_context_messages=20)
     command_handler = CommandHandler(context_manager, "Test prompt")
 
     handler = MessageHandler(mock_llm, context_manager, command_handler, "Test prompt")
@@ -97,7 +97,7 @@ async def test_system_prompt_added_on_first_message(setup_handler: SetupHandlerT
 
     await handler.handle_message(msg, 999, 888)
 
-    context = context_manager.get_context(999, 888)
+    context = await context_manager.get_context(999, 888)
     assert len(context) == 3
     assert context[0].role == "system"
     assert context[0].content == "Test system prompt"
@@ -151,7 +151,7 @@ async def test_context_persistence_across_messages(setup_handler: SetupHandlerTu
     await handler.handle_message(msg1, 111, 222)
     await handler.handle_message(msg2, 111, 222)
 
-    context = context_manager.get_context(111, 222)
+    context = await context_manager.get_context(111, 222)
     # system + (user + assistant) * 2 = 5
     assert len(context) == 5
     assert context[0].role == "system"
