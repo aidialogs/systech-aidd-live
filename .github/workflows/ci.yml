@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - develop
+      - cicd  # Для тестирования публикации образов
   pull_request:
     branches:
       - main
       - develop
+      - cicd
 
 # Права для публикации в GitHub Container Registry
 permissions:
@@ -191,7 +193,7 @@ jobs:
     name: Security Scan (Trivy)
     runs-on: ubuntu-latest
     needs: [build-images]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/cicd'
     
     strategy:
       matrix:
@@ -229,7 +231,7 @@ jobs:
     name: Publish to GHCR
     runs-on: ubuntu-latest
     needs: [build-images, security-scan]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/cicd'
     
     strategy:
       matrix:
