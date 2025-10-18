@@ -22,6 +22,7 @@ services:
 
   bot:
     image: ghcr.io/aidialogs/systech-aidd-bot:latest
+    platform: linux/amd64
     container_name: systech-aidd-bot
     command: ["uv", "run", "python", "-m", "src.main"]
     env_file:
@@ -35,6 +36,7 @@ services:
 
   api:
     image: ghcr.io/aidialogs/systech-aidd-api:latest
+    platform: linux/amd64
     container_name: systech-aidd-api
     command: ["uv", "run", "python", "-m", "src.api_server"]
     env_file:
@@ -50,6 +52,7 @@ services:
 
   frontend:
     image: ghcr.io/aidialogs/systech-aidd-frontend:latest
+    platform: linux/amd64
     container_name: systech-aidd-frontend
     command: ["pnpm", "dev"]
     environment:
