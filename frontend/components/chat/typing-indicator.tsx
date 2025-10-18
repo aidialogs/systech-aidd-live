@@ -16,4 +16,3 @@ export function TypingIndicator() {
     </motion.div>
   );
 }
-

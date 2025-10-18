@@ -17,12 +17,14 @@ Quick reference for using the AI Chat feature implemented in Sprint F4.
 **Purpose:** General conversation with AI assistant
 
 **How to use:**
+
 1. Type your message in the input field
 2. Press Enter or click the Send button
 3. Wait for AI response (typing indicator shows)
 4. Continue conversation naturally
 
 **Example questions:**
+
 - "Hello, how are you?"
 - "Can you help me with Python programming?"
 - "Tell me a joke"
@@ -35,6 +37,7 @@ Quick reference for using the AI Chat feature implemented in Sprint F4.
 **Purpose:** Analytics and statistics queries using natural language
 
 **How to use:**
+
 1. Toggle to "Admin" mode using the mode switcher
 2. Ask analytics questions in natural language
 3. AI will generate SQL query, execute it, and provide answer
@@ -72,21 +75,25 @@ Quick reference for using the AI Chat feature implemented in Sprint F4.
 ## Features
 
 ### Message Display
+
 - **User messages:** Appear on the right in light bubbles
 - **AI messages:** Appear on the left in dark bubbles
 - **Animations:** Smooth fade-in animations for all messages
 - **Auto-scroll:** Chat automatically scrolls to latest message
 
 ### Mode Indicator
+
 - **Blue badge:** Normal mode active
 - **Purple badge:** Admin mode active
 - Always visible in the chat header
 
 ### Typing Indicator
+
 - Three animated dots appear when AI is thinking
 - Helps you know the chat is processing your request
 
 ### SQL Query Display (Admin Mode Only)
+
 - SQL query shown below the answer
 - Useful for debugging and understanding how data was retrieved
 - Can be used to learn SQL or verify query correctness
@@ -102,6 +109,7 @@ Quick reference for using the AI Chat feature implemented in Sprint F4.
 - **No expiration:** Session persists until localStorage is cleared
 
 To start a fresh conversation:
+
 1. Open browser developer tools (F12)
 2. Go to Application → Local Storage
 3. Delete the `chat_session_id` key
@@ -112,12 +120,14 @@ To start a fresh conversation:
 ## Safety Features (Admin Mode)
 
 ### Allowed:
+
 - ✅ SELECT queries only
 - ✅ Read-only operations
 - ✅ JOINs, WHERE, GROUP BY, ORDER BY
 - ✅ Aggregate functions (COUNT, AVG, SUM, etc.)
 
 ### Blocked:
+
 - ❌ DROP (deleting tables)
 - ❌ DELETE (removing records)
 - ❌ UPDATE (modifying records)
@@ -134,26 +144,31 @@ All queries are validated before execution to ensure database safety.
 ## Troubleshooting
 
 ### Chat button doesn't appear
+
 - Ensure frontend is running: `make frontend-dev`
 - Check browser console for errors
 - Verify you're on the dashboard page
 
 ### Messages don't send
+
 - Ensure backend API is running: `make api-run`
 - Check that API is accessible at http://localhost:8000
 - Open Network tab in browser devtools to see API errors
 
 ### Admin mode returns errors
+
 - Ensure database is running and accessible
 - Check backend logs for SQL execution errors
 - Verify your question can be translated to a SELECT query
 
 ### SQL query looks wrong (Admin mode)
+
 - LLM might misunderstand the question - try rephrasing
 - Be more specific about what you want
 - Check the database schema in the query prompt
 
 ### Session context seems lost
+
 - Check localStorage for `chat_session_id`
 - Session might have been cleared
 - Backend might have restarted (context stored in database)
@@ -163,6 +178,7 @@ All queries are validated before execution to ensure database safety.
 ## Technical Details
 
 ### Database Schema
+
 ```sql
 -- Users table
 users (
@@ -187,6 +203,7 @@ messages (
 ### API Endpoints
 
 **Send Message:**
+
 ```http
 POST /api/chat/message
 Content-Type: application/json
@@ -199,6 +216,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "message": "AI response",
@@ -237,6 +255,7 @@ Content-Type: application/json
 ## Support
 
 For issues or questions:
+
 1. Check the backend logs: Look at terminal running `make api-run`
 2. Check frontend console: Open browser devtools (F12)
 3. Review `frontend/doc/sprint-f4-summary.md` for implementation details
@@ -245,4 +264,3 @@ For issues or questions:
 ---
 
 **Enjoy chatting with your AI assistant!** 🤖✨
-

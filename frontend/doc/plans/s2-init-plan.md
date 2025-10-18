@@ -32,6 +32,7 @@
   - Server Components first - использование RSC где возможно
 
 - Раздел 3: Структура проекта
+
   ```
   frontend/
   ├── app/                    # Next.js App Router
@@ -336,11 +337,13 @@ next-env.d.ts
 ## Быстрый старт
 
 ### Установка зависимостей
+
 \`\`\`bash
 make frontend-install
 \`\`\`
 
 ### Запуск dev-сервера
+
 \`\`\`bash
 make frontend-dev
 \`\`\`
@@ -348,6 +351,7 @@ make frontend-dev
 Приложение будет доступно на http://localhost:3000
 
 ### Проверка качества кода
+
 \`\`\`bash
 make frontend-check-all
 \`\`\`
@@ -413,6 +417,7 @@ make frontend-check-all
 ### Результаты
 
 **Технологический стек:**
+
 - Next.js 15.5.6
 - React 19.1.0
 - TypeScript 5.9.3
@@ -421,6 +426,7 @@ make frontend-check-all
 - pnpm 10.16.1
 
 **Команды разработки:**
+
 ```bash
 make frontend-install      # Установка зависимостей
 make frontend-dev          # Запуск dev-сервера (порт 3000)
@@ -428,7 +434,7 @@ make frontend-check-all    # Проверка качества кода (lint + 
 ```
 
 **Доступные документы:**
+
 - `frontend/doc/frontend-vision.md` - техническое видение
 - `doc/adrs/ADR-07.md` - ADR выбора технологий
 - `frontend/README.md` - руководство по работе с проектом
-

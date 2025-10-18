@@ -64,10 +64,14 @@ export function TimelineChart({ data }: TimelineChartProps) {
           fillOpacity={1}
           fill="url(#colorMessages)"
           dot={{ fill: "hsl(var(--chart-1))", r: 4 }}
-          activeDot={{ r: 6, fill: "hsl(var(--chart-1))", stroke: "hsl(var(--background))", strokeWidth: 2 }}
+          activeDot={{
+            r: 6,
+            fill: "hsl(var(--chart-1))",
+            stroke: "hsl(var(--background))",
+            strokeWidth: 2,
+          }}
         />
       </AreaChart>
     </ResponsiveContainer>
   );
 }
-

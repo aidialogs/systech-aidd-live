@@ -11,7 +11,7 @@
 | Код    | Описание                         | Статус         | План реализации                                                                               |
 | ------ | -------------------------------- | -------------- | --------------------------------------------------------------------------------------------- |
 | **F1** | Требования к дашборду и Mock API | ✅ Завершен    | [План F1](.cursor/plans/sprint-f1-plan-e37197b4.plan.md) · [Результаты](sprint-f1-summary.md) |
-| **F2** | Каркас frontend проекта          | ✅ Completed   | [План спринта](plans/s2-init-plan.md)                                    |
+| **F2** | Каркас frontend проекта          | ✅ Completed   | [План спринта](plans/s2-init-plan.md)                                                         |
 | **F3** | Реализация dashboard             | 📋 Планируется | -                                                                                             |
 | **F4** | Реализация ИИ-чата               | 📋 Планируется | -                                                                                             |
 | **F5** | Переход на реальный API          | 📋 Планируется | -                                                                                             |
@@ -76,6 +76,7 @@
 ### Что реализовано
 
 **Технологический стек:**
+
 - Next.js 15.5.6 с App Router
 - React 19.1.0
 - TypeScript 5.9.3 (strict mode)
@@ -84,6 +85,7 @@
 - pnpm 10.16.1
 
 **Структура проекта:**
+
 ```
 frontend/
 ├── app/           # Next.js App Router (layout, page, globals.css)
@@ -100,6 +102,7 @@ frontend/
 ```
 
 **Команды разработки (Makefile):**
+
 - `make frontend-install` - установка зависимостей
 - `make frontend-dev` - запуск dev-сервера (http://localhost:3000)
 - `make frontend-build` - production сборка

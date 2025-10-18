@@ -171,7 +171,7 @@ frontend/
 Build результаты:
 
 ```
-Route (app)                         Size  First Load JS    
+Route (app)                         Size  First Load JS
 ┌ ○ /                                0 B         116 kB
 ├ ○ /_not-found                      0 B         116 kB
 └ ○ /dashboard                    109 kB         225 kB
@@ -184,12 +184,15 @@ Route (app)                         Size  First Load JS
 ### Подготовка
 
 1. **Запустить Backend API:**
+
    ```bash
    make api-run
    ```
+
    Убедиться, что API доступен на http://localhost:8000
 
 2. **Установить зависимости frontend:**
+
    ```bash
    make frontend-install
    ```
@@ -399,4 +402,3 @@ make frontend-check-all
 ## Заключение
 
 Sprint F3 успешно завершен. Реализован полнофункциональный dashboard с поддержкой тем, responsive дизайном, интеграцией с Mock API и всеми необходимыми компонентами. Код прошел все проверки качества и готов к использованию.
-

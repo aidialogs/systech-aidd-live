@@ -28,4 +28,3 @@ export function PeriodSelector({ period, onPeriodChange }: PeriodSelectorProps) 
     </div>
   );
 }
-
