@@ -8,7 +8,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 # Копирование файлов с описанием зависимостей
-COPY package.json pnpm-lock.yaml* ./
+COPY frontend/package.json frontend/pnpm-lock.yaml* ./
 
 # Установка зависимостей
 RUN pnpm install --frozen-lockfile
@@ -24,8 +24,8 @@ WORKDIR /app
 # Копирование node_modules из deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Копирование исходного кода
-COPY . .
+# Копирование исходного кода frontend
+COPY frontend/ .
 
 # Настройка переменных окружения для сборки
 ENV NEXT_TELEMETRY_DISABLED=1
