@@ -66,7 +66,9 @@ export default function DashboardPage() {
         {/* Header with period selector */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              😈 Devil dashboard
+            </h1>
             <p className="text-sm text-muted-foreground">
               Dialog statistics and analytics
             </p>
