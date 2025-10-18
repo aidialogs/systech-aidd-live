@@ -28,7 +28,7 @@ jobs:
             context: .
             image_name: systech-aidd-api
           - name: frontend
-            dockerfile: frontend/Dockerfile.frontend
+            dockerfile: Dockerfile.frontend
             context: frontend
             image_name: systech-aidd-frontend
     
