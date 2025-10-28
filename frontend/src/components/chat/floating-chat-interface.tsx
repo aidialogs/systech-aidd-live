@@ -5,6 +5,8 @@ import { ChatBubble, ChatBubbleMessage, ChatBubbleAvatar } from '@/components/ui
 import { ChatInput } from '@/components/ui/chat-input';
 import { ChatMessageList } from '@/components/ui/chat-message-list';
 import { Button } from '@/components/ui/button';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface Message {
   id: number;
@@ -43,8 +45,22 @@ export function ChatMessages({ messages, isLoading, error, mode }: ChatMessagesP
               {message.content}
             </ChatBubbleMessage>
             {message.sql_query && mode === 'admin' && (
-              <div className="text-xs text-muted-foreground font-mono bg-muted/50 p-2 rounded mt-1">
-                <strong>SQL:</strong> {message.sql_query}
+              <div className="mt-1 rounded overflow-hidden border border-muted">
+                <div className="bg-muted/80 px-3 py-1 text-xs font-semibold">
+                  SQL Query
+                </div>
+                <SyntaxHighlighter
+                  language="sql"
+                  style={vscDarkPlus}
+                  customStyle={{
+                    margin: 0,
+                    fontSize: '0.75rem',
+                    borderRadius: 0,
+                  }}
+                  wrapLongLines={true}
+                >
+                  {message.sql_query}
+                </SyntaxHighlighter>
               </div>
             )}
           </div>
